@@ -9,13 +9,33 @@ var Leftbar = function ( editor ) {
     container.setId( 'leftbar' );
 
     var materialTab = new UI.Text( '    MATERIAL EDITOR   ' );
-    materialTab.setWidth("272px");
-    //materialTab.setBackgroundColor("#111");
-    var tabs = new UI.Div();
-    tabs.setId( 'tabs' );
-    tabs.add( materialTab);
-    container.add( tabs );
+    materialTab.setWidth( "272px" );
+    materialTab.setColor( "#444" );
+    materialTab.setBorderRight( "1px solid #222" );
+    materialTab.setPadding( "12px" );
+    container.add( materialTab );
 
+
+    var tableTree = new UI.Table();
+    container.add( tableTree );
+
+    var addBranchRow = new UI.Row();
+
+    addBranchRow.add( new UI.Button( '+' ).setMarginLeft( '10px' ).setWidth( "280px" ).setMarginTop( '10px' ).onClick( function () {
+
+
+    } ) );
+
+    container.add(addBranchRow);
+
+    var addMaterialRow = new UI.Row();
+
+    addBranchRow.add( new UI.Button( 'New Material' ).setMarginLeft( '10px' ).setWidth( "280px" ).setMarginTop( '10px' ).onClick( function () {
+
+
+    } ) );
+
+    container.add(addMaterialRow);
 
     return container;
 };

@@ -280,3 +280,17 @@ select {
 		overflow: auto;
 		outline: none;
 	}
+
+table{
+	background-color: #ddd;
+	border : none;
+	color: #aaa;
+	margin-left: 10px;
+	width: 280px;
+}
+	tr{
+		height: 20px;
+	}
+	table .tableTree{
+		border: 1px solid #ccc;
+	}

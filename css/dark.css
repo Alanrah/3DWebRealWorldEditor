@@ -189,7 +189,7 @@ select {
 	#tabs span {
 		color: #555;
 		border-right: 1px solid #222;
-		padding: 12px;
+		padding: 10px;
 	}
 /*点击选中之后字体颜色和背景色的变化*/
 	#tabs span.selected {
@@ -292,3 +292,14 @@ select {
 }
 
 
+table{
+	background-color: #1b1b1b;
+	border : none;
+	color: #555;
+	margin-left: 10px;
+	width: 280px;
+}
+
+	table .tableTree{
+	border: 1px solid #5A5A5A;
+	}

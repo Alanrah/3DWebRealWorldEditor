@@ -271,7 +271,7 @@ UI.Input = function ( text ) {
 	dom.style.border = '1px solid transparent';
 
 	dom.addEventListener( 'keydown', function ( event ) {
-
+		//该方法将停止事件的传播，阻止它被分派到其他 Document 节点。
 		event.stopPropagation();
 
 	}, false );
@@ -356,7 +356,7 @@ UI.TextArea.prototype.setValue = function ( value ) {
 };
 
 
-// Select
+// Select:http://www.w3school.com.cn/tags/tag_select.asp
 
 UI.Select = function () {
 
@@ -1002,3 +1002,21 @@ UI.Modal.prototype.hide = function () {
 	return this;
 
 };
+
+
+UI.Table = function(){
+	UI.Element.call( this );
+
+	var dom = document.createElement( 'table' );
+	dom.className = 'tableTree' ;
+
+	function addTr(event){
+		this.createElement("tr");
+	}
+
+	this.dom = dom;
+
+	return this;
+}
+UI.Table.prototype = Object.create( UI.Element.prototype );
+UI.Table.prototype.constructor = UI.Table;
