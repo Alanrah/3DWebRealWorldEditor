@@ -299,7 +299,19 @@ table{
 	margin-left: 10px;
 	width: 280px;
 }
+    table .tableTree{
+	margin:1px;
+	}
+tr{
+	height: 20px;
+	background-color: #222;
+}
+td{
+	width: 142px;
+}
 
-	table .tableTree{
-	border: 1px solid #5A5A5A;
+a{
+	color:#555;
+	margin-right: 10px;
+	margin-left: 10px;
 	}

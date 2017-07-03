@@ -1010,13 +1010,10 @@ UI.Table = function(){
 	var dom = document.createElement( 'table' );
 	dom.className = 'tableTree' ;
 
-	function addTr(event){
-		this.createElement("tr");
-	}
-
 	this.dom = dom;
 
 	return this;
 }
+
 UI.Table.prototype = Object.create( UI.Element.prototype );
 UI.Table.prototype.constructor = UI.Table;

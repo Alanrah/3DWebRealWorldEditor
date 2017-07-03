@@ -290,7 +290,20 @@ table{
 }
 	tr{
 		height: 20px;
+		background-color: #fff;
 	}
-	table .tableTree{
+	tr .branch{
+
+	}
+	table #tree{
 		border: 1px solid #ccc;
+	}
+	td{
+	width: 142px;
+}
+
+a{
+	color:#555;
+	margin-right: 10px;
+	margin-left: 10px;
 	}
