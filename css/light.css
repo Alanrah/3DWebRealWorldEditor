@@ -265,8 +265,8 @@ select {
 	}
 
 	#leftbar .Row {
-		min-height: 20px;
-		margin-bottom: 10px;
+		min-height: 25px;
+		margin-bottom: 0px;
 	}
 #preview{
 		width: 100%;
@@ -280,30 +280,25 @@ select {
 		overflow: auto;
 		outline: none;
 	}
-
-table{
-	background-color: #ddd;
-	border : none;
-	color: #aaa;
-	margin-left: 10px;
-	width: 280px;
-}
-	tr{
-		height: 20px;
-		background-color: #fff;
-	}
-	tr .branch{
-
-	}
-	table #tree{
-		border: 1px solid #ccc;
-	}
-	td{
-	width: 142px;
+#branchDivClass{
+	width: 300px;
+	background-color: #111;
+	float: left;
 }
 
-a{
-	color:#555;
-	margin-right: 10px;
+#branchULClass{
+ 	width: 100%;
+ 	height: 100%;
+ 	color:#444;
+ 	-webkit-padding-start: 0px;
+ }
+ul{
+	display: block;
+	-webkit-padding-start: 0px;
+}
+
+li {
+	width: 290px;
+	list-style-type:none;
 	margin-left: 10px;
-	}
+}

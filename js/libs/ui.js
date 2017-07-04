@@ -1017,3 +1017,54 @@ UI.Table = function(){
 
 UI.Table.prototype = Object.create( UI.Element.prototype );
 UI.Table.prototype.constructor = UI.Table;
+
+UI.BranchDivClass = function(){
+	UI.Element.call( this );
+
+	var dom = document.createElement( 'div' );
+
+	this.dom = dom;
+
+	return this;
+}
+
+UI.BranchDivClass.prototype = Object.create( UI.Element.prototype );
+UI.BranchDivClass.prototype.constructor = UI.BranchDivClass;
+
+UI.BranchULClass = function(){
+	UI.Element.call( this );
+
+	var dom = document.createElement( 'ul' );
+
+	this.dom = dom;
+
+	return this;
+}
+UI.BranchULClass.prototype = Object.create( UI.Element.prototype );
+UI.BranchULClass.prototype.constructor = UI.branchULClass;
+
+UI.Ul = function(){
+	UI.Element.call( this );
+
+	var dom = document.createElement( 'ul' );
+	 
+
+	this.dom = dom;
+
+	return this;
+}
+UI.Ul.prototype = Object.create( UI.Element.prototype );
+UI.Ul.prototype.constructor = UI.Ul;
+
+
+UI.Li = function(){
+	UI.Element.call( this );
+
+	var dom = document.createElement( 'li' );
+
+	this.dom = dom;
+
+	return this;
+}
+UI.Li.prototype = Object.create( UI.Element.prototype );
+UI.Li.prototype.constructor = UI.Li;
