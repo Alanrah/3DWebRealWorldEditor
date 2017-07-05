@@ -8,6 +8,7 @@ var Leftbar = function ( editor ) {
     //id名称第一个字符都是小写字母
     container.setId( 'leftbar' );
 
+
     var materialTab = new UI.Text( '    MATERIAL EDITOR   ' );
     materialTab.setWidth( "272px" );
     materialTab.setColor( "#444" );
@@ -22,6 +23,8 @@ var Leftbar = function ( editor ) {
     branchUL.setId( "branchULClass" );
     branchDiv.add( branchUL );
     container.add( branchDiv );
+
+
 
     //新建分支
     var addBranchRow = new UI.Row();
@@ -38,12 +41,21 @@ var Leftbar = function ( editor ) {
             var liRow = new UI.Row().setMarginTop("3px");
             
             var name = new UI.Button( branchName ).setWidth( "150px" ).onClick(function(){setDDisplay(li);});
-            var add =new UI.Button( 'add' ).setWidth( "40px" ).onClick(function(){addLi(li);});
+
+            var add =new UI.Button( 'add' ).setWidth( "40px" ).onClick(function(){
+                if (confirm("Do you want to add new class(yes) or new material(no) ?")) {
+                   addLi(li); 
+                }
+                else{
+                    new Leftbar.MaterialLib(editor,branchUL);//编辑材质,并将当前材质信息传过去
+                }
+                });
+
             var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delLi(li,liRow);});
             var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editLi(liRow);}); 
 
             liRow.add(name);
-            liRow.add(add);
+            liRow.add(add); 
             liRow.add(del);
             liRow.add(edit);
 
@@ -53,14 +65,13 @@ var Leftbar = function ( editor ) {
 
             branchUL.add(li);
         }
+        window.localStorage.setItem('branchUL', branchUL.dom);
         
 
     } ) );
 
     //setDisplay()貌似和某某重名了
     function setDDisplay(li){
-
-        console.log(li.dom.lastChild.style.display);
 
         if(li.dom.lastChild.style.display !== "block"){
             li.dom.lastChild.style.display = "block";
@@ -71,6 +82,19 @@ var Leftbar = function ( editor ) {
         }
         
     }
+
+    function initBranchUL(){
+        if(window.localStorage[ 'branchUL' ]){
+            branchUL.dom.innerHTML(window.localStorage['branchUL']); 
+        }
+        else{
+            console.log('branchUL is empty !');
+        }
+       
+    }
+
+    initBranchUL();
+
 
     function addLi(liParent){
 
@@ -97,6 +121,7 @@ var Leftbar = function ( editor ) {
 
             liParent.dom.lastChild.appendChild(li.dom);
         }
+        window.localStorage.setItem('branchUL', branchUL.dom);
         
     }
 
@@ -130,10 +155,11 @@ var Leftbar = function ( editor ) {
 
     addBranchRow.add( new UI.Button( 'New Material +' ).setMarginLeft( '10px' ).setWidth( "280px" ).setMarginTop( '10px' ).onClick( function () {
 
-       // new Leftbar.MaterialLib(editor);
+        new Leftbar.MaterialLib(editor);//创建新材质
     } ) );
 
     container.add(addMaterialRow);
 
     return container;
 };
+

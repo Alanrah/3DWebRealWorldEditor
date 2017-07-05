@@ -4,10 +4,10 @@
 
 var Config = function ( name ) {
 
+//浏览器localStorage的信息
 	var storage = {
 		'autosave': true,
-		'theme': 'css/light.css',
-
+		'theme': 'css/dark.css',
 		'project/renderer': 'WebGLRenderer',
 		'project/renderer/antialias': true,
 		'project/renderer/gammaInput': false,
@@ -18,11 +18,14 @@ var Config = function ( name ) {
 		'settings/history': false
 	};
 
+//如果本地没有初始数据，则初始化strage
 	if ( window.localStorage[ name ] === undefined ) {
 
 		window.localStorage[ name ] = JSON.stringify( storage );
 
-	} else {
+	} 
+//载入listorage的用户数据
+	else {
 
 		var data = JSON.parse( window.localStorage[ name ] );
 

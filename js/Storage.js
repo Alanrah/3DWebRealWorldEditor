@@ -13,6 +13,7 @@ var Storage = function () {
 
 	}
 
+	//数据库名称和版本
 	var name = 'threejs-editor';
 	var version = 1;
 
@@ -26,7 +27,7 @@ var Storage = function () {
 			request.onupgradeneeded = function ( event ) {
 
 				var db = event.target.result;
-
+				//创建了一个名为‘states’的数据存储
 				if ( db.objectStoreNames.contains( 'states' ) === false ) {
 
 					db.createObjectStore( 'states' );
