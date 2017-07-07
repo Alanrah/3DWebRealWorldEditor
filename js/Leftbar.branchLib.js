@@ -1,9 +1,9 @@
 //用户分支中的material信息
 var Mat = function(name){
 
-	this.type = '';
-	this.uuid = '';
 	this.name = name;
+	/*this.type = '';
+	this.uuid = '';
 	this.color = '';
 	this.roughness = '';
 	this.metalness = '';
@@ -30,7 +30,7 @@ var Mat = function(name){
 	this.opacity = '';
 	this.transparent = '';
 	this.alphatest = '';
-	this.wireframe = '';
+	this.wireframe = '';*/
 }
 Mat.prototype = {
 	setType: function ( value ) {

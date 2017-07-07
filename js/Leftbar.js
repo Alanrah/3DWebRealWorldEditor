@@ -24,9 +24,86 @@ var Leftbar = function ( editor ) {
     branchDiv.add( branchUL );
     container.add( branchDiv );
 
+
     //本地存储branchlib的信息的变量,变量名和构造器的名字不能相同
     var branchLib = new BranchLib();
+    var changed = false;
+    var branchLibJson = null;
 
+    //init branchLib and branchUL
+    function initBranch(){
+        if(localStorage.getItem("branchLibJson")){
+            branchLibJSON = JSON.parse(localStorage.getItem("branchLibJson")); 
+
+            //类型转换
+            for(var i in branchLibJSON.branchArray){
+                var branch = new Branch(branchLibJSON.branchArray[i].name);
+                branchLib.addBranch(branch);
+                for(var j in branchLibJSON.branchArray[i].ownMat){
+                    var material = new Mat(branchLibJSON.branchArray[i].ownMat[j].name);
+                     branchLib.branchArray[i].addMaterial(material);
+                }
+            }
+            
+            for(var i in branchLib.branchArray){
+                var lli = new UI.Li().setMarginTop("1px");
+                var lliRow = new UI.Row().setMarginTop("3px");
+                var name = new UI.Button( branchLib.branchArray[i].name ).setWidth( "150px" ).onClick(function(){setDDisplay(lli);});
+                var add =new UI.Button( 'add' ).setWidth( "40px" ).onClick(function(){
+                if (confirm("Do you want to add new class(yes) or new material(no) ?")) {
+                   addMaterial(lli,branchLib.branchArray[i]); 
+                }
+                else{
+                    //new Leftbar.MaterialLib(editor,branchUL);//编辑材质,并将当前材质信息传过去
+                }
+                });
+                var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delBranch(lli,lliRow,branchLib.branchArray[i]);/*console.log(this);del这个button*/});
+                var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editBranch(lliRow,branchLib.branchArray[i]);}); 
+                lliRow.add(name);
+                lliRow.add(add); 
+                lliRow.add(del);
+                lliRow.add(edit);
+                lli.add(lliRow);
+                lli.add(new UI.Ul().setMarginTop("1px"));
+                branchUL.add(lli);
+
+                for(var j in branchLib.branchArray[i].ownMat){
+                    var li = new UI.Li();
+                    li.setMarginLeft("30px").setWidth("250px");
+
+                    var liRow = new UI.Row();
+                    var name = new UI.Button( branchLib.branchArray[i].ownMat[j].name ).setWidth( "160px" );
+                    var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delMaterial(li,liRow,i,branchLib.branchArray[i].ownMat[j].name);});
+                    var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editMaterial(i,branchLib.branchArray[i].ownMat[j].name);});
+                    liRow.add(name);
+                    liRow.add(del);
+                    liRow.add(edit);
+                    li.add(liRow);
+                    lli.dom.lastChild.appendChild(li.dom);//在li下面的ul中添加material
+                }
+            }
+        }
+    }
+    initBranch();
+    console.log(branchLib);
+    console.log(branchUL);
+
+    function saveChange(){
+        //变量转换成json数据存储在localstorage，每次改变都刷新重新写入
+        if(changed === true){
+            branchLibJson = JSON.stringify(branchLib);
+            if(localStorage.getItem("branchLibJson")){
+                localStorage.removeItem("branchLibJson"); 
+                localStorage.setItem("branchLibJson",branchLibJson); 
+                //console.log(localStorage.getItem("branchLibJson"));
+            }
+            else{
+                localStorage.setItem("branchLibJson",branchLibJson);
+            }
+            
+            changed = false;
+        }
+    }
 
     //新建分支
     var addBranchRow = new UI.Row();
@@ -52,7 +129,6 @@ var Leftbar = function ( editor ) {
 
             }
 
-  
         if(branchName){
 
             //将新建的分支信息存在branchLib中
@@ -68,7 +144,7 @@ var Leftbar = function ( editor ) {
 
             var add =new UI.Button( 'add' ).setWidth( "40px" ).onClick(function(){
                 if (confirm("Do you want to add new class(yes) or new material(no) ?")) {
-                   addMaterial(li,branch); //传过去的是branch
+                   addMaterial(li,branch); //传过去的是当前所造branch
                 }
                 else{
                     //new Leftbar.MaterialLib(editor,branchUL);//编辑材质,并将当前材质信息传过去
@@ -84,11 +160,12 @@ var Leftbar = function ( editor ) {
             liRow.add(edit);
 
             li.add(liRow);
-
             li.add(new UI.Ul().setMarginTop("1px"));
 
             branchUL.add(li);//this就是branchUL，li是arguments
-
+            changed = true;
+            saveChange();
+            console.log('addbranch');
             console.log(branchLib);
         }
         
@@ -97,7 +174,7 @@ var Leftbar = function ( editor ) {
 
     //setDisplay()貌似和某某重名了
     function setDDisplay(){
-
+        arguments[0].dom.lastChild.style.display = "block";
         if(arguments[0].dom.lastChild.style.display !== "block"){
             arguments[0].dom.lastChild.style.display = "block";
         }
@@ -105,7 +182,6 @@ var Leftbar = function ( editor ) {
         else{
             arguments[0].dom.lastChild.style.display = "none";
         }
-        
     }
 
     //在分之中增加material信息
@@ -163,10 +239,11 @@ var Leftbar = function ( editor ) {
             li.add(liRow);
 
             arguments[0].dom.lastChild.appendChild(li.dom);//在li下面的ul中添加material
-             //console.log(branchLib.branchArray[0].name);
+            changed = true;
+            saveChange();
+            console.log('addmaterial');
+            console.log(branchLib);
         }
-        console.log(branchLib);
-console.log(JSON.stringify(branchLib));
         
     }
 
@@ -185,7 +262,10 @@ console.log(JSON.stringify(branchLib));
         console.log(lirow.dom.firstChild.textContent);
         arguments[0].dom.parentNode.removeChild(arguments[1].dom.parentNode);
         //console.log(this);windows
-        console.log(branchLib);
+        changed = true;
+        saveChange();
+        console.log('delbranch');
+            console.log(branchLib);
     }
 
 
@@ -219,6 +299,9 @@ console.log(JSON.stringify(branchLib));
 
                 }
             }
+            changed = true;
+            saveChange();
+            console.log('editbranch');
             console.log(branchLib);
     }
 
@@ -230,17 +313,24 @@ console.log(JSON.stringify(branchLib));
                 }
         }  
 
-        arguments[0].dom.parentNode.removeChild(arguments[1].dom.parentNode);
-        console.log(branchLib);
+        li.dom.parentNode.removeChild(lirow.dom.parentNode);
+        changed = true;
+        saveChange();
+        console.log('delmaterial');
+            console.log(branchLib);
     }
 
 
     function editMaterial(i,materialName){
         for(var j in branchLib.branchArray[i].ownMat){
             if(branchLib.branchArray[i].ownMat[j].name === materialName){
-                branchLib.branchArray[i].editMaterial(branchLib.branchArray[i],j);
+                branchLib.branchArray[i].ownMat[j].editMaterial(branchLib.branchArray[i],j);
                 }
         } 
+        changed = true;
+        saveChange();
+        console.log('editmaterial');
+        console.log(branchLib);
     }
 
     container.add(addBranchRow);
