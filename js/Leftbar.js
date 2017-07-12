@@ -5,15 +5,11 @@
 var Leftbar = function ( editor ) {
 
     var container = new UI.Panel();
-    //id名称第一个字符都是小写字母
     container.setId( 'leftbar' );
 
 
     var materialTab = new UI.Text( '    MATERIAL EDITOR   ' );
-    materialTab.setWidth( "272px" );
-    materialTab.setColor( "#444" );
-    materialTab.setBorderRight( "1px solid #222" );
-    materialTab.setPadding( "12px" );
+    materialTab.setWidth( "272px" ).setColor( "#444" ).setBorderRight( "1px solid #222" ).setPadding( "12px" );
     container.add( materialTab );
 
     //新建外部div和ul
@@ -27,9 +23,25 @@ var Leftbar = function ( editor ) {
 
     //本地存储branchlib的信息的变量,变量名和构造器的名字不能相同
     var branchLib = new BranchLib();
-    var changed = false;
-    var branchLibJson = null;
 
+    function saveChange(){
+        //变量转换成json数据存储在localstorage，每次改变都刷新重新写入
+        if(branchLib.changed === true){
+            var branchLibJson = JSON.stringify(branchLib);
+            if(localStorage.getItem("branchLibJson")){
+                localStorage.removeItem("branchLibJson"); 
+                localStorage.setItem("branchLibJson",branchLibJson); 
+                console.log(localStorage.getItem("branchLibJson"));
+            }
+            else{
+                localStorage.setItem("branchLibJson",branchLibJson);
+            }
+            branchLib.changed = false;
+            console.log(localStorage.getItem("branchLibJson"))
+            console.log(branchLib);
+            console.log(branchUL);
+        }
+    }
     //init branchLib and branchUL
     function initBranch(){
         if(localStorage.getItem("branchLibJson")){
@@ -37,314 +49,340 @@ var Leftbar = function ( editor ) {
 
             //类型转换
             for(var i in branchLibJSON.branchArray){
-                var branch = new Branch(branchLibJSON.branchArray[i].name);
-                branchLib.addBranch(branch);
+                addBranchLib(branchLibJSON.branchArray[i].name);
+                addBranchLi(branchLibJSON.branchArray[i].name);
+
                 for(var j in branchLibJSON.branchArray[i].ownMat){
+
                     var material = new Mat(branchLibJSON.branchArray[i].ownMat[j].name);
-                     branchLib.branchArray[i].addMaterial(material);
-                }
-            }
-            
-            for(var i in branchLib.branchArray){
-                var lli = new UI.Li().setMarginTop("1px");
-                var lliRow = new UI.Row().setMarginTop("3px");
-                var name = new UI.Button( branchLib.branchArray[i].name ).setWidth( "150px" ).onClick(function(){setDDisplay(lli);});
-                var add =new UI.Button( 'add' ).setWidth( "40px" ).onClick(function(){
-                if (confirm("Do you want to add new class(yes) or new material(no) ?")) {
-                   addMaterial(lli,branchLib.branchArray[i]); 
-                }
-                else{
-                    //new Leftbar.MaterialLib(editor,branchUL);//编辑材质,并将当前材质信息传过去
-                }
-                });
-                var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delBranch(lli,lliRow,branchLib.branchArray[i]);/*console.log(this);del这个button*/});
-                var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editBranch(lliRow,branchLib.branchArray[i]);}); 
-                lliRow.add(name);
-                lliRow.add(add); 
-                lliRow.add(del);
-                lliRow.add(edit);
-                lli.add(lliRow);
-                lli.add(new UI.Ul().setMarginTop("1px"));
-                branchUL.add(lli);
+                    material.father = branchLib.branchArray[i].name;
+                    branchLib.branchArray[i].addMaterial(material);
 
-                for(var j in branchLib.branchArray[i].ownMat){
                     var li = new UI.Li();
+                    li.setClass("material");
                     li.setMarginLeft("30px").setWidth("250px");
+                    li.setClass("material");
 
-                    var liRow = new UI.Row();
-                    var name = new UI.Button( branchLib.branchArray[i].ownMat[j].name ).setWidth( "160px" );
-                    var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delMaterial(li,liRow,i,branchLib.branchArray[i].ownMat[j].name);});
-                    var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editMaterial(i,branchLib.branchArray[i].ownMat[j].name);});
-                    liRow.add(name);
-                    liRow.add(del);
-                    liRow.add(edit);
-                    li.add(liRow);
-                    lli.dom.lastChild.appendChild(li.dom);//在li下面的ul中添加material
+                    var name = new UI.Button( material.name ).setWidth( "160px" ).setClass("matButton").setCursor("move");
+                    /* var drag = false;
+                    name.dom.onmousedown = function(e){
+                      drag   = true;
+                    }
+                    document.onmousemove = function(e){
+                      if(drag ===true){
+                        console.log(e.clientX+"  "+e.clientY)
+                      }
+                    }
+                    document.onmouseup = function(e){
+                        dragMaterial(lli,materialName,document.elementFromPoint(e.clientX,e.clientY));
+                        drag   = false;
+                    }*/
+                    branchUL.dom.childNodes[i].lastChild.appendChild(li.dom);//在li下面的ul中添加material
+                    var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delMaterial(li.dom,branchLibJSON.branchArray[i].ownMat[j].name);});
+                    var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editMaterial(li.dom,branchLibJSON.branchArray[i].ownMat[j].name);});
+                    li.add(name);
+                    li.add(del);
+                    li.add(edit);
+                     
                 }
             }
         }
     }
     initBranch();
-    console.log(branchLib);
-    console.log(branchUL);
 
-    function saveChange(){
-        //变量转换成json数据存储在localstorage，每次改变都刷新重新写入
-        if(changed === true){
-            branchLibJson = JSON.stringify(branchLib);
-            if(localStorage.getItem("branchLibJson")){
-                localStorage.removeItem("branchLibJson"); 
-                localStorage.setItem("branchLibJson",branchLibJson); 
-                //console.log(localStorage.getItem("branchLibJson"));
-            }
-            else{
-                localStorage.setItem("branchLibJson",branchLibJson);
-            }
-            
-            changed = false;
-        }
-    }
+
 
     //新建分支
     var addBranchRow = new UI.Row();
-
     addBranchRow.add( new UI.Button( 'New Class Li +' ).setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
-        //创建一个父
-
-        var li = new UI.Li().setMarginTop("1px");
-
         var branchName = prompt("Please input the New Class Name");
 
-        //如果重名，重新输入或者放弃
+        branchName = ifRenameBran(branchName);
+
+        if(branchName && branchName !== 0){
+
+            addBranchLib(branchName);
+            addBranchLi(branchName);
+        }
+        else{
+            alert("添加失败，无效branchName！")
+        }
+    }));
+
+    function ifRenameBran(branchName){
+        var i=0;
+        for(i=0;i<branchLib.branchArray.length;i++){
+                //找到对应的branch
+                if(branchLib.branchArray[i].name == branchName){// === cuo 
+                    return 0;
+                }
+            }
+            return branchName;
+    }
+    function addBranchLib(branchName){
+        var branch = new Branch(branchName);
+        branchLib.addBranch(branch);
+        branchLib.changed = true;
+        saveChange();
+    }
+
+    function addBranchLi(branchName){
+
+        var li = new UI.Li().setMarginTop("1px");
+        li.setClass("branch");
+        var liRow = new UI.Row().setMarginTop("3px"); 
+
+        var name = new UI.Button( branchName ).setWidth( "150px" ).setClass("branchButton").onClick(function(){setDDisplay(this.dom.parentNode.parentNode)});
+        var add =new UI.Button( 'add' ).setWidth( "40px" ).setClass("branchButton").onClick(function(){
+                addMaterial(this.dom.parentNode.parentNode); //传过去的是当前所造branch
+            });
+
+        var del = new UI.Button( 'del' ).setWidth( "40px" ).setClass("branchButton").onClick(function(){delBranch(this.dom.parentNode.parentNode);/*console.log(this);del这个button*/});
+        var edit = new UI.Button( 'edit' ).setWidth( "50px" ).setClass("branchButton").onClick(function(){editBranch(this.dom.parentNode.parentNode);}); 
+
+        liRow.add(name);
+        liRow.add(add); 
+        liRow.add(del);
+        liRow.add(edit);
+
+        li.add(liRow);
+        li.add(new UI.Ul().setMarginTop("1px"));
+
+        branchUL.add(li);//this就是branchUL，li是arguments
+    }
+
+     function setDDisplay(li){
+        
+        if(li.lastChild.style.display !== "block" && li.lastChild.style.display !== "none"){
+            li.lastChild.style.display = "none";
+        }
+
+        else if(li.lastChild.style.display === "none"){
+            li.lastChild.style.display = "block";
+        }
+        else if(li.lastChild.style.display === "block"){
+            li.lastChild.style.display = "none";
+        }
+    }
+
+    function delBranch(li){
+        var branchName = li.firstChild.firstChild.textContent;
+        var i = findBranch(branchName);
+        if(i>=0){
+            branchLib.delBranch(i);
+            li.parentNode.removeChild(li);
+            branchLib.changed = true;
+            saveChange();
+        }
+        else{
+            alert("不存在该branch，del 失败！")
+        }
+
+    }
+
+    function editBranch(li){
+        var branchName = li.firstChild.firstChild.textContent;
+        var i = findBranch(branchName);
+        if(i>=0){
+            var newName = prompt("Please input the New Class Name");
+            newName = ifRenameBran(newName);
+            if(newName){
+                li.firstChild.firstChild.textContent = newName;
+                branchLib.branchArray[i].editBranch(newName);
+                for(var j in branchLib.branchArray[i].ownMat){
+                    branchLib.branchArray[i].ownMat[j].father = newName;
+                }
+                branchLib.changed = true;
+                saveChange();
+            }
+            else{
+                alert("修改失败，无效newBranchName！")
+            }
+                
+            }
+        else{
+            alert("不存在该branchName，edit 失败！")
+        }
+    }
+    
+
+    function findBranch(branchName){
         for(var i in branchLib.branchArray){
                 //找到对应的branch
-                if(branchLib.branchArray[i].name === branchName && i!== branchLib.branchArray.length-1){
-                    
-                    branchName = prompt("Renamed, Please input the New Class Name again");
-                    i=0;
-                }
-                else if(i=== branchLib.branchArray.length-1){
-                    break;
+                if(branchLib.branchArray[i].name == branchName){// === cuo
+                    return i;
                 }
 
             }
-
-        if(branchName){
-
-            //将新建的分支信息存在branchLib中
-            var branch = new Branch(branchName);
-            branchLib.addBranch(branch);
-
-            //console.log(branchLib);//对的
-
-            //将新建信息展示在页面
-            var liRow = new UI.Row().setMarginTop("3px");
-            
-            var name = new UI.Button( branch.name ).setWidth( "150px" ).onClick(function(){setDDisplay(li);});
-
-            var add =new UI.Button( 'add' ).setWidth( "40px" ).onClick(function(){
-                if (confirm("Do you want to add new class(yes) or new material(no) ?")) {
-                   addMaterial(li,branch); //传过去的是当前所造branch
+        return -1;
+    }  
+    function findMat(ownMat,materialName){
+        for(var j in ownMat){
+            if(ownMat[j].name == materialName){
+                return j;
                 }
-                else{
-                    //new Leftbar.MaterialLib(editor,branchUL);//编辑材质,并将当前材质信息传过去
+        } 
+        return -1;
+    }
+    function matNameInput(li){
+        var name = li.firstChild.firstChild.textContent;
+        var materialName = prompt("Please input the New material Name");
+        //如果重名，重新输入或者放弃
+            for(var i in branchLib.branchArray){
+                    //找到对应的branch
+                    if(branchLib.branchArray[i].name == name){
+                        for(var j in branchLib.branchArray[i].ownMat){
+                            if(branchLib.branchArray[i].ownMat[j].name == materialName){
+                                return 0;
+                            }
+                    }
+                    return materialName;
                 }
-                });
+            }
+    }
+    function addMaterial(li){
+        var materialName = matNameInput(li);
+        if(materialName && materialName !== 0){
 
-            var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delBranch(li,liRow,branch);/*console.log(this);del这个button*/});
-            var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editBranch(liRow,branch);}); 
-
-            liRow.add(name);
-            liRow.add(add); 
-            liRow.add(del);
-            liRow.add(edit);
-
-            li.add(liRow);
-            li.add(new UI.Ul().setMarginTop("1px"));
-
-            branchUL.add(li);//this就是branchUL，li是arguments
-            changed = true;
-            saveChange();
-            console.log('addbranch');
-            console.log(branchLib);
+            addMatLib(li,materialName);
+            addMatLi(li,materialName);
         }
+        else{
+            alert("添加失败，无效materialName！")
+        }
+           //var mat = new Leftbar.MaterialLib(editor,branchUL);
+        }
+    function addMatLib(li,materialName){
+        var i = findBranch(li.firstChild.firstChild.textContent);
+        if(i>=0){
+            var material = new Mat(materialName);
+            material.father = branchLib.branchArray[i].name;
+            branchLib.branchArray[i].addMaterial(material);
+            branchLib.changed = true;
+            saveChange();
+        }
+        else{alert("addMatLib 中该branch不存在")}
         
+    }
 
-    } ) );
+    function addMatLi(lli,materialName){
+        var li = new UI.Li();
+        li.setClass("material");
+        li.setMarginLeft("30px").setWidth("250px");
+        var drag = false;
+        var name = new UI.Button( materialName ).setWidth( "160px" ).setClass("matButton").setCursor("move");
+           /* name.dom.onmousedown = function(e){
+              drag   = true;
+            }
+            document.onmousemove = function(e){
+              if(drag ===true){
+                console.log(e.clientX+"  "+e.clientY)
+              }
+            }
+            document.onmouseup = function(e){
+                dragMaterial(lli,materialName,document.elementFromPoint(e.clientX,e.clientY));
+                drag   = false;
+            }*/
+        var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delMaterial(li.dom,materialName);});
+        var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editMaterial(li.dom,materialName);});
 
-    //setDisplay()貌似和某某重名了
-    function setDDisplay(){
-        arguments[0].dom.lastChild.style.display = "block";
-        if(arguments[0].dom.lastChild.style.display !== "block"){
-            arguments[0].dom.lastChild.style.display = "block";
+        li.add(name);
+        li.add(del);
+        li.add(edit);
+
+        lli.lastChild.appendChild(li.dom);//在li下面的ul中添加material
+    }
+
+    function delMaterial(li,materialName){
+        var i = findBranch(li.parentNode.parentNode.firstChild.firstChild.textContent);
+        if(i>=0){
+            var j = findMat( branchLib.branchArray[i].ownMat,materialName);
+            if(j>=0){
+                branchLib.branchArray[i].delMaterial(j);
+                li.parentNode.removeChild(li);
+                branchLib.changed = true;
+                saveChange();
+            }
+            else{alert("delMatLib 中该mat不存在")}
+        }
+        else{alert("delMatLib 中该branch不存在")}
+    }
+
+    function editMaterial(li,materialName){
+        console.log(li.parentNode.parentNode.firstChild.firstChild.textContent)
+        var i = findBranch(li.parentNode.parentNode.firstChild.firstChild.textContent);
+        if(i>=0){
+            var j = findMat( branchLib.branchArray[i].ownMat,materialName);
+            if(j>=0){
+                branchLib.branchArray[i].editMaterial(j);
+                alert("该功能暂时不完善")
+                branchLib.changed = true;
+                saveChange();
+            }
+            else{alert("editMatLib 中该mat不存在")}
+        }
+        else{alert("editMatLib 中该branch不存在")}
+        
+    }
+
+//要将lli分支下的materialname拖动到elementFromPoint(e.clientX,e.clientY)
+function dragMaterial(lli,materialName,elem){
+
+    var x = findBranch(lli.firstChild.firstChild.textContent);
+    var branch = branchLib.branchArray[x];
+
+    var insertPosition;
+console.log('jinlai1')
+    if(elem.className == "branchButton"){
+        console.log('jinlai11')
+            if(elem.parentNode.firstChild.textContent == branch.name){//drag在同一branch下，不做任何修改
+                console.log('jinlai2')
+                return;
+            }
+
+            else{
+                for(var i in branchLib.branchArray){//防止同一branch下的mat重名
+                if(branchLib.branchArray[i].name == elem.parentNode.firstChild.textContent){
+                    for(var j in branchLib.branchArray[i].ownMat){
+                        if(branchLib.branchArray[i].ownMat[j].name == materialName){ alert("该分类下有重名的material！");return;console.log('jinlai3')}
+                        }
+                    }
+                    insertPosition = i;
+                }
+                
+                //delete 原来的结构
+
+                for(var j in branchLib.branchArray[x].ownMat){
+                    if(branchLib.branchArray[x].ownMat[j].name == materialName){
+                        branchLib.branchArray[x].delMaterial(j);console.log('jinlai4')
+                        break;
+                        }
+                    }  
+                for(var j in lli.lastChild.childNodes){
+                if(lli.lastChild.childNodes[j].firstChild.textContent == materialName){
+                    lli.lastChild.removeChild(lli.lastChild.childNodes[j]);console.log('jinlai5')
+                    break;
+                    }
+                }
+        
+        //加到新的branch里面
+        branchLib.branchArray[insertPosition].addMaterial(new Mat(materialName));
+        for(var j in branchUL.childNodes){
+            if(branchUL.childNodes[i].firstChild.firstChild.textContent == branchLib.branchArray[insertPosition].name){
+                addMatLi(branchUL.dom.childNodes[i],materialName);console.log('jinlai6');break;
+            }
+            }
+        }
         }
 
         else{
-            arguments[0].dom.lastChild.style.display = "none";
+            return;
         }
-    }
-
-    //在分之中增加material信息
-    function addMaterial(lli,branch){
-
-        var li = new UI.Li();
-        li.setMarginLeft("30px").setWidth("250px");
-
-        var materialName = prompt("Please input the New material Name");
-
-
-        //如果重名，重新输入或者放弃
-        for(var i in branchLib.branchArray){
-                //找到对应的branch
-                if(branchLib.branchArray[i].name === branch.name){
-                    for(var j in branchLib.branchArray[i].ownMat){
-                        if(branchLib.branchArray[i].ownMat[j].name === materialName){
-                            materialName = prompt("Renamed, Please input the material Name again");
-                            j=0;
-                        }
-                }
-            }
-                else {
-                    break;
-                }
-            }
-
-       var mi=0; 
-
-        if(materialName){
-
-            //将新增的material信息加入所属的branch
-            var material = new Mat(materialName);   
-
-            //搜索branchLib，在对应branch下面push mat
-            for(var i in branchLib.branchArray){
-                //找到对应的branch
-                if(branchLib.branchArray[i].name === branch.name ){
-                    
-                    branchLib.branchArray[i].addMaterial(material);
-                    mi = i;
-                }
-            } 
-
-            var liRow = new UI.Row();
-
-            var name = new UI.Button( material.name ).setWidth( "160px" );
-            var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delMaterial(li,liRow,mi,materialName);});
-            var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){editMaterial(mi,materialName);});
-
-            liRow.add(name);
-            liRow.add(del);
-            liRow.add(edit);
-
-            li.add(liRow);
-
-            arguments[0].dom.lastChild.appendChild(li.dom);//在li下面的ul中添加material
-            changed = true;
-            saveChange();
-            console.log('addmaterial');
-            console.log(branchLib);
-        }
-        
-    }
-
-    //删除分之中的material信息
-    function delBranch(li,lirow,branch){
-
-        for(var i in branchLib.branchArray){
-                //找到对应的branch
-                if(branchLib.branchArray[i].name === branch.name ){
-                    
-                    branchLib.delBranch(i);
-                    console.log(i);
-
-                }
-            }
-        console.log(lirow.dom.firstChild.textContent);
-        arguments[0].dom.parentNode.removeChild(arguments[1].dom.parentNode);
-        //console.log(this);windows
-        changed = true;
+console.log('jinlai7')
+        branchLib.changed = true;
         saveChange();
-        console.log('delbranch');
-            console.log(branchLib);
-    }
-
-
-    function editBranch(li,branch){
-        var newName = prompt("Please input the New Class Name");
-
-        //对newName查重
-        for(var i in branchLib.branchArray){
-                //找到对应的branch
-                if(branchLib.branchArray[i].name === newName && i!== branchLib.branchArray.length-1){
-                    
-                    newName = prompt("Renamed, Please input the New Class Name again");
-                    i=0;
-                }
-                else if(i === branchLib.branchArray.length-1){
-                    break;
-                }
-
-            }
-
-        if(newName){
-            console.log(arguments[0].dom.firstChild);
-            arguments[0].dom.firstChild.textContent = newName;
-        }
-
-        for(var i in branchLib.branchArray){
-                //找到对应的branch
-                if(branchLib.branchArray[i].name === branch.name ){
-                    
-                    branchLib.branchArray[i].editBranch(newName);
-
-                }
-            }
-            changed = true;
-            saveChange();
-            console.log('editbranch');
-            console.log(branchLib);
-    }
-
-    function delMaterial(li,lirow,mi,materialName) {//mi的branch在branchLib中的index
-
-        for(var j in branchLib.branchArray[mi].ownMat){
-            if(branchLib.branchArray[mi].ownMat[j].name === materialName){
-                branchLib.branchArray[mi].delMaterial(j);
-                }
-        }  
-
-        li.dom.parentNode.removeChild(lirow.dom.parentNode);
-        changed = true;
-        saveChange();
-        console.log('delmaterial');
-            console.log(branchLib);
-    }
-
-
-    function editMaterial(i,materialName){
-        for(var j in branchLib.branchArray[i].ownMat){
-            if(branchLib.branchArray[i].ownMat[j].name === materialName){
-                branchLib.branchArray[i].ownMat[j].editMaterial(branchLib.branchArray[i],j);
-                }
-        } 
-        changed = true;
-        saveChange();
-        console.log('editmaterial');
-        console.log(branchLib);
-    }
-
+}
+    
     container.add(addBranchRow);
-
-    //新建材质
-    var addMaterialRow = new UI.Row();
-
-    addBranchRow.add( new UI.Button( 'New Material +' ).setMarginLeft( '10px' ).setWidth( "280px" ).setMarginTop( '10px' ).onClick( function () {
-
-        new Leftbar.MaterialLib(editor);//创建新材质
-    } ) );
-
-    container.add(addMaterialRow);
-
     return container;
-};
-
+}

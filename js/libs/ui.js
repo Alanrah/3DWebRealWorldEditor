@@ -1004,20 +1004,6 @@ UI.Modal.prototype.hide = function () {
 };
 
 
-UI.Table = function(){
-	UI.Element.call( this );
-
-	var dom = document.createElement( 'table' );
-	dom.className = 'tableTree' ;
-
-	this.dom = dom;
-
-	return this;
-}
-
-UI.Table.prototype = Object.create( UI.Element.prototype );
-UI.Table.prototype.constructor = UI.Table;
-
 UI.BranchDivClass = function(){
 	UI.Element.call( this );
 

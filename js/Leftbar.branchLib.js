@@ -2,6 +2,8 @@
 var Mat = function(name){
 
 	this.name = name;
+	this.father = 0;
+	this.drag = false;
 	/*this.type = '';
 	this.uuid = '';
 	this.color = '';
@@ -37,9 +39,6 @@ Mat.prototype = {
 
 		this.type = value;
 
-	},
-	editMaterial:function(branch,mat){//编辑branch下面第mat个material参数
-		
 	}
 
 }
@@ -52,15 +51,17 @@ var Branch = function(name){
 }
 
 Branch.prototype = {
-
-	addMaterial: function(mat){//mat是个object
-		this.ownMat.push(mat);
-	},
 	editBranch: function(newName){
 		this.name = newName;
 	},
-	delMaterial: function(mat){
-		this.ownMat.splice(mat,1);
+	addMaterial: function(mat){//mat是个object
+		this.ownMat.push(mat);
+	},
+	delMaterial: function(matidx){
+		this.ownMat.splice(matidx,1);
+	},
+	editMaterial:function(matidx){//编辑branch下面第mat个material参数
+		
 	}
 }
 
@@ -68,13 +69,14 @@ Branch.prototype = {
 //用户存储分支信息的object
 var BranchLib = function(){
 	this.branchArray = new Array();
+	this.changed = false;
 }
 BranchLib.prototype = {
 	addBranch:function(branch){
 		this.branchArray.push(branch);
 		},
 	//该函数等待debug
-	delBranch: function(branch){//删除了位于index branch的这个branch元素
-		this.branchArray.splice(branch,1);
+	delBranch: function(branchidx){//删除了位于index branch的这个branch元素
+		this.branchArray.splice(branchidx,1);
 	}
 }
