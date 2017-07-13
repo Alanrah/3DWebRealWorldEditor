@@ -7,7 +7,7 @@ var Sidebar = function ( editor ) {
 	var container = new UI.Panel();
 	container.setId( 'sidebar' );
 
-	//
+	//UI.Text is span
 
 	var sceneTab = new UI.Text( 'SCENE' ).onClick( onClick );
 	var projectTab = new UI.Text( 'PROJECT' ).onClick( onClick );
@@ -19,7 +19,8 @@ var Sidebar = function ( editor ) {
 	container.add( tabs );
 
 	function onClick( event ) {
-
+		//event.target  <span class="" style="cursor: default; display: inline-block; vertical-align: middle;">SCENE</span>
+		//event.target.textContent)  'SCENE'
 		select( event.target.textContent );
 
 	}
@@ -45,8 +46,8 @@ var Sidebar = function ( editor ) {
 	);
 	container.add( settings );
 
-	//
 
+	//section = 'scene'||project||settings
 	function select( section ) {
 
 		sceneTab.setClass( '' );

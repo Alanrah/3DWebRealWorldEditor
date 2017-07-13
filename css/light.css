@@ -302,3 +302,55 @@ li {
 	list-style-type:none;
 	margin-left: 10px;
 }
+
+#materialLib {
+	position: absolute;
+	left: 300px;
+	top: 32px;
+	bottom: 32px;
+	width: 300px;
+	border-left:solid 1px #222;
+	background-color: #fff;
+	float: left;
+	display: none;
+	z-index: -1;
+	color: #333;
+}
+	#materialLib * {
+		vertical-align: middle;
+	}
+
+	#materialLib .Panel{
+		color: #888;
+		padding: 10px;
+		border-top: 1px solid #222;
+	}
+	#materialLib .Panel.collapsed {
+		margin-bottom: 0;
+	}
+
+#preview{
+	width: 100%;
+	height: 300px;
+	position: absolute;
+	float: left;
+}
+#paras{
+	width: 280px;
+	top: 300px;
+	bottom: 0px;
+	position: absolute;
+	overflow: auto;
+	background-color: #eee;
+	border-top:solid 5px #333;
+	float: left;
+}
+	#paras .Panel{
+		color: #888;
+		padding: 10px;
+		border-top: 1px solid #222;
+	}
+	#paras .Row{
+		min-height: 20px;
+		margin-bottom: 10px;
+	}

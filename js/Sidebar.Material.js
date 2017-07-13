@@ -2,6 +2,14 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
+//if(viewport){
+	//执行下面的update
+	//}
+	//else if（preview）{
+	//传值过来
+	//materialUUID = mat.UUID
+	//}
+
 Sidebar.Material = function ( editor ) {
 
 	var signals = editor.signals;
@@ -12,6 +20,9 @@ Sidebar.Material = function ( editor ) {
 	container.setPaddingTop( '20px' );
 
 	// New / Copy / Paste
+	// new将当前选中物体的material初始化，除了type，类似于clear material
+	// copy 复制当前material
+	// paste 将复制的material，paste在当前选中的物体上
 
 	var copiedMaterial;
 	var managerRow = new UI.Row();
@@ -20,6 +31,7 @@ Sidebar.Material = function ( editor ) {
 	managerRow.add( new UI.Button( 'New' ).onClick( function () {
 
 		var material = new THREE[ materialClass.getValue() ]();
+		//execute: function ( cmd, optionalName ) 
 		editor.execute( new SetMaterialCommand( currentObject, material ), 'New Material: ' + materialClass.getValue() );
 		update();
 

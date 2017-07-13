@@ -2,37 +2,7 @@
 var Mat = function(name){
 
 	this.name = name;
-	this.father = 0;
-	this.drag = false;
-	/*this.type = '';
-	this.uuid = '';
-	this.color = '';
-	this.roughness = '';
-	this.metalness = '';
-	this.emissive = '';
-	this.specular = '';
-	this.shininess = '';
-	this.clearcoat = '';
-	this.skinning = '';
-	this.map = '';
-	this.alphamap = '';
-	this.bumpmap = '';
-	this.normalmap = '';
-	this.displacemap = '';
-	this.roughmap = '';
-	this.metalmap = '';
-	this.specularmap = '';
-	this.envmap = '';
-	this.lightmap = '';
-	this.aomap = '';
-	this.emissivemap = '';
-	this.side = '';
-	this.shading = '';
-	this.blending = '';
-	this.opacity = '';
-	this.transparent = '';
-	this.alphatest = '';
-	this.wireframe = '';*/
+	//var material = new THREE.MeshStandardMaterial();
 }
 Mat.prototype = {
 	setType: function ( value ) {

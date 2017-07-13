@@ -7,7 +7,6 @@ var Leftbar = function ( editor ) {
     var container = new UI.Panel();
     container.setId( 'leftbar' );
 
-
     var materialTab = new UI.Text( '    MATERIAL EDITOR   ' );
     materialTab.setWidth( "272px" ).setColor( "#444" ).setBorderRight( "1px solid #222" ).setPadding( "12px" );
     container.add( materialTab );
@@ -19,7 +18,7 @@ var Leftbar = function ( editor ) {
     branchUL.setId( "branchULClass" );
     branchDiv.add( branchUL );
     container.add( branchDiv );
-
+    
 
     //本地存储branchlib的信息的变量,变量名和构造器的名字不能相同
     var branchLib = new BranchLib();
@@ -31,15 +30,14 @@ var Leftbar = function ( editor ) {
             if(localStorage.getItem("branchLibJson")){
                 localStorage.removeItem("branchLibJson"); 
                 localStorage.setItem("branchLibJson",branchLibJson); 
-                console.log(localStorage.getItem("branchLibJson"));
             }
             else{
                 localStorage.setItem("branchLibJson",branchLibJson);
             }
             branchLib.changed = false;
-            console.log(localStorage.getItem("branchLibJson"))
-            console.log(branchLib);
-            console.log(branchUL);
+            //console.log(localStorage.getItem("branchLibJson"))
+            //console.log(branchLib);
+            //console.log(branchUL);
         }
     }
     //init branchLib and branchUL
@@ -55,7 +53,6 @@ var Leftbar = function ( editor ) {
                 for(var j in branchLibJSON.branchArray[i].ownMat){
 
                     var material = new Mat(branchLibJSON.branchArray[i].ownMat[j].name);
-                    material.father = branchLib.branchArray[i].name;
                     branchLib.branchArray[i].addMaterial(material);
 
                     var li = new UI.Li();
@@ -88,8 +85,8 @@ var Leftbar = function ( editor ) {
             }
         }
     }
-    initBranch();
-
+    //initBranch();
+addMaterial();
 
 
     //新建分支
@@ -189,9 +186,6 @@ var Leftbar = function ( editor ) {
             if(newName){
                 li.firstChild.firstChild.textContent = newName;
                 branchLib.branchArray[i].editBranch(newName);
-                for(var j in branchLib.branchArray[i].ownMat){
-                    branchLib.branchArray[i].ownMat[j].father = newName;
-                }
                 branchLib.changed = true;
                 saveChange();
             }
@@ -240,23 +234,38 @@ var Leftbar = function ( editor ) {
                 }
             }
     }
-    function addMaterial(li){
-        var materialName = matNameInput(li);
-        if(materialName && materialName !== 0){
 
-            addMatLib(li,materialName);
-            addMatLi(li,materialName);
+
+    function addMaterial(li){
+
+        viewport.setLeft('601px');
+        matbar.setDisplay('block');
+/*方便自测
+        if(confirm("yes 新建mat，no 新建空mat")){
+            //改变全局变量viewport的宽度
+            viewport.setLeft('601px');
+            matbar.setDisplay('block');
         }
         else{
-            alert("添加失败，无效materialName！")
+            var materialName = matNameInput(li);
+            if(materialName && materialName !== 0){
+
+                addMatLib(li,materialName);
+                addMatLi(li,materialName);
+            }
+            else{
+                alert("添加失败，无效materialName！")
+            }  
         }
-           //var mat = new Leftbar.MaterialLib(editor,branchUL);
+        */
         }
+
+
+
     function addMatLib(li,materialName){
         var i = findBranch(li.firstChild.firstChild.textContent);
         if(i>=0){
             var material = new Mat(materialName);
-            material.father = branchLib.branchArray[i].name;
             branchLib.branchArray[i].addMaterial(material);
             branchLib.changed = true;
             saveChange();
