@@ -1,9 +1,14 @@
 MatBar.Paras = function(editor){
+
+	//console.log(leftbar.branchLib);cannot read property 'branchLib' of undefined at new MatBar.Paras
+	//console.log(leftbar.currentMaterial);Cannot read property 'currentMaterial' of undefined
 	
 	var container = new UI.Panel();//DIV
 	container.setId('paras');
-
-	var currentMaterial = new THREE.MeshStandardMaterial();//初始化
+	
+	var currentObject = new THREE.Mesh(new THREE.BoxBufferGeometry(4,4,4),new THREE.MeshStandardMaterial());
+	var currentMaterial = currentObject.material;//初始化,后续currentMaterial变化时不需要改变currentObject
+	var currentGeometry = currentObject.geometry;
 
 	// type
 	
@@ -51,7 +56,7 @@ MatBar.Paras = function(editor){
 	var materialNameRow = new UI.Row();
 	var materialName = new UI.Input().setWidth( '150px' ).setFontSize( '12px' ).onChange( function () {
 
-		///editor.execute( new SetMaterialValueCommand( editor.selected, 'name', materialName.getValue() ) );
+		updateMat();
 
 	} );
 
@@ -59,41 +64,6 @@ MatBar.Paras = function(editor){
 	materialNameRow.add( materialName );
 
 	container.add( materialNameRow );
-
-	// program
-
-	var materialProgramRow = new UI.Row();
-	materialProgramRow.add( new UI.Text( 'Program' ).setWidth( '90px' ) );
-
-	var materialProgramInfo = new UI.Button( 'Info' );
-	materialProgramInfo.setMarginLeft( '4px' );
-	materialProgramInfo.onClick( function () {
-
-		signals.editScript.dispatch( currentObject, 'programInfo' );
-
-	} );
-	materialProgramRow.add( materialProgramInfo );
-
-	var materialProgramVertex = new UI.Button( 'Vertex' );
-	materialProgramVertex.setMarginLeft( '4px' );
-	materialProgramVertex.onClick( function () {
-
-		signals.editScript.dispatch( currentObject, 'vertexShader' );
-
-	} );
-	materialProgramRow.add( materialProgramVertex );
-
-	var materialProgramFragment = new UI.Button( 'Fragment' );
-	materialProgramFragment.setMarginLeft( '4px' );
-	materialProgramFragment.onClick( function () {
-
-		signals.editScript.dispatch( currentObject, 'fragmentShader' );
-
-	} );
-	materialProgramRow.add( materialProgramFragment );
-
-	container.add( materialProgramRow );
-
 
 	// color
 
@@ -449,34 +419,59 @@ MatBar.Paras = function(editor){
 	var materialSave = new UI.Row();
 	var materialSaveButton = new UI.Button( 'save' ).setMarginLeft( '90px' ).onClick( function () {
 
+		leftbar.currentMaterial = currentMaterial; //返回该material
+		viewport.setLeft('300px');
+		matbar.setDisplay('none');//关闭编辑窗口
+
 	} );
 	var materialQuit = new UI.Button( 'quit' ).setMarginLeft( '7px' ).onClick( function () {
+
+		currentObject.material = new THREE.MeshStandardMaterial();
+		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
 
 	} );
 	materialSave.add(materialSaveButton);
 	materialSave.add(materialQuit);
 	container.add(materialSave);
 
-	
+	refreshUI();
 
+	
 	function updateMat(){
+
+		var textureWarning = false;
+		var objectHasUvs = false;
+
+		if ( currentObject instanceof THREE.Sprite ) objectHasUvs = true;
+		if ( currentGeometry instanceof THREE.Geometry && currentGeometry.faceVertexUvs[ 0 ].length > 0 ) objectHasUvs = true;
+		if ( currentGeometry instanceof THREE.BufferGeometry && currentGeometry.attributes.uv !== undefined ) objectHasUvs = true;
+
+		//生成currentMaterial
 		if(currentMaterial){
+			if ( currentMaterial instanceof THREE[ materialClass.getValue() ] === false ) {
+
+				 currentMaterial = new THREE[ materialClass.getValue() ]();//不需保存任何变量
+
+				 setRowVisibility();//一旦materialClass变化，就刷新显示页面
+
+			}
+
 			if ( currentMaterial.uuid !== undefined && currentMaterial.uuid !== materialUUID.getValue() ) {
 
 				currentMaterial.uuid = materialUUID.getValue()
 
 			}
 
-			if ( currentMaterial instanceof THREE[ materialClass.getValue() ] === false ) {
+			if ( currentMaterial.name !== undefined && currentMaterial.name !== materialName.getValue() ) {
 
-				 currentMaterial = new THREE[ materialClass.getValue() ]();//不需保存任何变量
-				 setRowVisibility();//一旦materialClass变化，就刷新显示页面
+				currentMaterial.name = materialName.getValue()
 
 			}
 
 			if ( currentMaterial.color !== undefined && currentMaterial.color.getHex() !== materialColor.getHexValue() ) {
 
-				currentMaterial.color = materialColor.getHexValue();
+				currentMaterial.color.setHex(materialColor.getHexValue());
+				//console.log( currentMaterial.color.getHex() + "  "+materialColor.getHexValue() ) 相等的十六进制数
 
 			}
 
@@ -492,14 +487,700 @@ MatBar.Paras = function(editor){
 
 			}
 
+			if ( currentMaterial.emissive !== undefined && currentMaterial.emissive.getHex() !== materialEmissive.getHexValue() ) {
+
+				currentMaterial.emissive.setHex(materialEmissive.getHexValue());
+
+			}
+
+			if ( currentMaterial.specular !== undefined && currentMaterial.specular.getHex() !== materialSpecular.getHexValue() ) {
+
+				currentMaterial.specular.setHex(materialSpecular.getHexValue());
+
+			}
+
+
+			if ( currentMaterial.shininess !== undefined && Math.abs( currentMaterial.shininess - materialShininess.getValue() ) >= 0.01 ) {
+
+				currentMaterial.shininess = materialShininess.getValue();
+
+			}
+
+			if ( currentMaterial.clearCoat !== undefined && Math.abs( currentMaterial.clearCoat - materialClearCoat.getValue() ) >= 0.01 ) {
+
+				currentMaterial.clearCoat = materialClearCoat.getValue();
+
+			}
+
+			if ( currentMaterial.clearCoatRoughness !== undefined && Math.abs( currentMaterial.clearCoatRoughness - materialClearCoatRoughness.getValue() ) >= 0.01 ) {
+
+				currentMaterial.clearCoatRoughness = materialClearCoatRoughness.getValue();
+
+			}
+
+
+			if ( currentMaterial.vertexColors !== undefined ) {
+
+				var vertexColors = parseInt( materialVertexColors.getValue() );
+
+				if ( currentMaterial.vertexColors !== vertexColors ) {
+
+					currentMaterial.vertexColors = vertexColors
+
+				}
+
+			}
+
+			if ( currentMaterial.skinning !== undefined && currentMaterial.skinning !== materialSkinning.getValue() ) {
+
+				currentMaterial.skinning = materialSkinning.getValue()
+
+			}
+
+
+			if ( currentMaterial.map !== undefined ) {
+
+				var mapEnabled = materialMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var map = mapEnabled ? materialMap.getValue() : null;
+					if ( currentMaterial.map !== map ) {
+
+						currentMaterial.map = map;
+
+					}
+
+				} else {
+
+					if ( mapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.alphaMap !== undefined ) {
+
+				var mapEnabled = materialAlphaMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var alphaMap = mapEnabled ? materialAlphaMap.getValue() : null;
+					if ( currentMaterial.alphaMap !== alphaMap ) {
+
+						currentMaterial.alphaMap = alphaMap ;
+
+					}
+
+				} else {
+
+					if ( mapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.bumpMap !== undefined ) {
+
+				var bumpMapEnabled = materialBumpMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var bumpMap = bumpMapEnabled ? materialBumpMap.getValue() : null;
+					if ( currentMaterial.bumpMap !== bumpMap ) {
+
+						currentMaterial.bumpMap = bumpMap;
+
+					}
+
+					if ( currentMaterial.bumpScale !== materialBumpScale.getValue() ) {
+
+						currentMaterial.bumpScale = materialBumpScale.getValue()
+
+					}
+
+				} else {
+
+					if ( bumpMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.normalMap !== undefined ) {
+
+				var normalMapEnabled = materialNormalMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var normalMap = normalMapEnabled ? materialNormalMap.getValue() : null;
+					if ( currentMaterial.normalMap !== normalMap ) {
+
+						currentMaterial.normalMap = normalMap;
+
+					}
+
+				} else {
+
+					if ( normalMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.displacementMap !== undefined ) {
+
+				var displacementMapEnabled = materialDisplacementMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var displacementMap = displacementMapEnabled ? materialDisplacementMap.getValue() : null;
+					if ( currentMaterial.displacementMap !== displacementMap ) {
+
+						currentMaterial.displacementMap = displacementMap;
+
+					}
+
+					if ( currentMaterial.displacementScale !== materialDisplacementScale.getValue() ) {
+
+						currentMaterial.displacementScale = materialDisplacementScale.getValue();
+
+					}
+
+				} else {
+
+					if ( displacementMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.roughnessMap !== undefined ) {
+
+				var roughnessMapEnabled = materialRoughnessMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var roughnessMap = roughnessMapEnabled ? materialRoughnessMap.getValue() : null;
+					if ( currentMaterial.roughnessMap !== roughnessMap ) {
+
+						currentMaterial.roughnessMap = roughnessMap;
+
+					}
+
+				} else {
+
+					if ( roughnessMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.metalnessMap !== undefined ) {
+
+				var metalnessMapEnabled = materialMetalnessMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var metalnessMap = metalnessMapEnabled ? materialMetalnessMap.getValue() : null;
+					if ( currentMaterial.metalnessMap !== metalnessMap ) {
+
+						currentMaterial.metalnessMap = metalnessMap;
+
+					}
+
+				} else {
+
+					if ( metalnessMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.specularMap !== undefined ) {
+
+				var specularMapEnabled = materialSpecularMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var specularMap = specularMapEnabled ? materialSpecularMap.getValue() : null;
+					if ( currentMaterial.specularMap !== specularMap ) {
+
+						currentMaterial.specularMap = specularMap;
+
+					}
+
+				} else {
+
+					if ( specularMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.envMap !== undefined ) {
+
+				var envMapEnabled = materialEnvMapEnabled.getValue() === true;
+
+				var envMap = envMapEnabled ? materialEnvMap.getValue() : null;
+
+				if ( currentMaterial.envMap !== envMap ) {
+
+					currentMaterial.envMap = envMap;
+
+				}
+
+			}
+
+			if ( currentMaterial.reflectivity !== undefined ) {
+
+				var reflectivity = materialReflectivity.getValue();
+
+				if ( currentMaterial.reflectivity !== reflectivity ) {
+
+					currentMaterial.reflectivity = reflectivity;
+
+				}
+
+			}
+
+			if ( currentMaterial.lightMap !== undefined ) {
+
+				var lightMapEnabled = materialLightMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var lightMap = lightMapEnabled ? materialLightMap.getValue() : null;
+					if ( currentMaterial.lightMap !== lightMap ) {
+
+						currentMaterial.lightMap = lightMap;
+
+					}
+
+				} else {
+
+					if ( lightMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.aoMap !== undefined ) {
+
+				var aoMapEnabled = materialAOMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var aoMap = aoMapEnabled ? materialAOMap.getValue() : null;
+					if ( currentMaterial.aoMap !== aoMap ) {
+
+						currentMaterial.aoMap = aoMap;
+
+					}
+
+					if ( currentMaterial.aoMapIntensity !== materialAOScale.getValue() ) {
+
+						currentMaterial.aoMapIntensity = materialAOScale.getValue();
+
+					}
+
+				} else {
+
+					if ( aoMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.emissiveMap !== undefined ) {
+
+				var emissiveMapEnabled = materialEmissiveMapEnabled.getValue() === true;
+
+				if ( objectHasUvs ) {
+
+					var emissiveMap = emissiveMapEnabled ? materialEmissiveMap.getValue() : null;
+					if ( currentMaterial.emissiveMap !== emissiveMap ) {
+
+						currentMaterial.emissiveMap = emissiveMap ;
+
+					}
+
+				} else {
+
+					if ( emissiveMapEnabled ) textureWarning = true;
+
+				}
+
+			}
+
+			if ( currentMaterial.side !== undefined ) {
+
+				var side = parseInt( materialSide.getValue() );
+				if ( currentMaterial.side !== side ) {
+
+					currentMaterial.side = side;
+
+				}
+
+			}
+
+			if ( currentMaterial.shading !== undefined ) {
+
+				var shading = parseInt( materialShading.getValue() );
+				if ( currentMaterial.shading !== shading ) {
+
+					currentMaterial.shading = shading;
+
+				}
+
+			}
+
+			if ( currentMaterial.blending !== undefined ) {
+
+				var blending = parseInt( materialBlending.getValue() );
+				if ( currentMaterial.blending !== blending ) {
+
+					currentMaterial.blending = blending;
+
+				}
+
+			}
+
+			if ( currentMaterial.opacity !== undefined && Math.abs( currentMaterial.opacity - materialOpacity.getValue() ) >= 0.01 ) {
+
+				currentMaterial.opacity = materialOpacity.getValue();
+
+			}
+
+			if ( currentMaterial.transparent !== undefined && currentMaterial.transparent !== materialTransparent.getValue() ) {
+
+				currentMaterial.transparent = materialTransparent.getValue();
+
+			}
+
+			if ( currentMaterial.alphaTest !== undefined && Math.abs( currentMaterial.alphaTest - materialAlphaTest.getValue() ) >= 0.01 ) {
+
+				currentMaterial.alphaTest = materialAlphaTest.getValue();
+
+			}
+
+			if ( currentMaterial.wireframe !== undefined && currentMaterial.wireframe !== materialWireframe.getValue() ) {
+
+				currentMaterial.wireframe = materialWireframe.getValue();
+
+			}
+
+			if ( currentMaterial.wireframeLinewidth !== undefined && Math.abs( currentMaterial.wireframeLinewidth - materialWireframeLinewidth.getValue() ) >= 0.01 ) {
+
+				currentMaterial.wireframeLinewidth = materialWireframeLinewidth.getValue();
+
+			}
+
+			refreshUI();
 
 
 		}
 
-		console.log(currentMaterial)
+		if ( textureWarning ) {
+
+			console.warn( "Can't set texture, model doesn't have texture coordinates" );
+
+		}
 				
-	
 	}
+
+
+	function refreshUI()  {
+
+		var material = currentMaterial;
+
+		if ( material.uuid !== undefined ) {
+
+			if( material.uuid !== null ){
+				materialUUID.setValue( material.uuid );
+			}
+			else{
+				materialUUID.setValue("");
+			}
+
+		}
+
+		if ( material.name !== undefined ) {
+
+			materialName.setValue( material.name );
+
+		}
+
+		materialClass.setValue( material.type );
+
+		if ( material.color !== undefined ) {
+
+			materialColor.setHexValue( material.color.getHexString() );
+
+		}
+
+		if ( material.roughness !== undefined ) {
+
+			materialRoughness.setValue( material.roughness );
+
+		}
+
+		if ( material.metalness !== undefined ) {
+
+			materialMetalness.setValue( material.metalness );
+
+		}
+
+		if ( material.emissive !== undefined ) {
+
+			materialEmissive.setHexValue( material.emissive.getHexString() );
+
+		}
+
+		if ( material.specular !== undefined ) {
+
+			materialSpecular.setHexValue( material.specular.getHexString() );
+
+		}
+
+		if ( material.shininess !== undefined ) {
+
+			materialShininess.setValue( material.shininess );
+
+		}
+
+		if ( material.clearCoat !== undefined ) {
+
+			materialClearCoat.setValue( material.clearCoat );
+
+		}
+
+		if ( material.clearCoatRoughness !== undefined ) {
+
+			materialClearCoatRoughness.setValue( material.clearCoatRoughness );
+
+		}
+
+		if ( material.vertexColors !== undefined ) {
+
+			materialVertexColors.setValue( material.vertexColors );
+
+		}
+
+		if ( material.skinning !== undefined ) {
+
+			materialSkinning.setValue( material.skinning );
+
+		}
+
+		if ( material.map !== undefined ) {
+
+			materialMapEnabled.setValue( material.map !== null );
+
+			if ( material.map !== null ) {
+
+				materialMap.setValue( material.map );
+
+			}
+
+		}
+
+		if ( material.alphaMap !== undefined ) {
+
+			materialAlphaMapEnabled.setValue( material.alphaMap !== null );
+
+			if ( material.alphaMap !== null ) {
+
+				materialAlphaMap.setValue( material.alphaMap );
+
+			}
+
+		}
+
+		if ( material.bumpMap !== undefined ) {
+
+			materialBumpMapEnabled.setValue( material.bumpMap !== null );
+
+			if ( material.bumpMap !== null ) {
+
+				materialBumpMap.setValue( material.bumpMap );
+
+			}
+
+			materialBumpScale.setValue( material.bumpScale );
+
+		}
+
+		if ( material.normalMap !== undefined ) {
+
+			materialNormalMapEnabled.setValue( material.normalMap !== null );
+
+			if ( material.normalMap !== null ) {
+
+				materialNormalMap.setValue( material.normalMap );
+
+			}
+
+		}
+
+		if ( material.displacementMap !== undefined ) {
+
+			materialDisplacementMapEnabled.setValue( material.displacementMap !== null );
+
+			if ( material.displacementMap !== null ) {
+
+				materialDisplacementMap.setValue( material.displacementMap );
+
+			}
+
+			materialDisplacementScale.setValue( material.displacementScale );
+
+		}
+
+		if ( material.roughnessMap !== undefined ) {
+
+			materialRoughnessMapEnabled.setValue( material.roughnessMap !== null );
+
+			if ( material.roughnessMap !== null ) {
+
+				materialRoughnessMap.setValue( material.roughnessMap );
+
+			}
+
+		}
+
+		if ( material.metalnessMap !== undefined ) {
+
+			materialMetalnessMapEnabled.setValue( material.metalnessMap !== null );
+
+			if ( material.metalnessMap !== null ) {
+
+				materialMetalnessMap.setValue( material.metalnessMap );
+
+			}
+
+		}
+
+		if ( material.specularMap !== undefined ) {
+
+			materialSpecularMapEnabled.setValue( material.specularMap !== null );
+
+			if ( material.specularMap !== null ) {
+
+				materialSpecularMap.setValue( material.specularMap );
+
+			}
+
+		}
+
+		if ( material.envMap !== undefined ) {
+
+			materialEnvMapEnabled.setValue( material.envMap !== null );
+
+			if ( material.envMap !== null ) {
+
+				materialEnvMap.setValue( material.envMap );
+
+			}
+
+		}
+
+		if ( material.reflectivity !== undefined ) {
+
+			materialReflectivity.setValue( material.reflectivity );
+
+		}
+
+		if ( material.lightMap !== undefined ) {
+
+			materialLightMapEnabled.setValue( material.lightMap !== null );
+
+			if ( material.lightMap !== null ) {
+
+				materialLightMap.setValue( material.lightMap );
+
+			}
+
+		}
+
+		if ( material.aoMap !== undefined ) {
+
+			materialAOMapEnabled.setValue( material.aoMap !== null );
+
+			if ( material.aoMap !== null ) {
+
+				materialAOMap.setValue( material.aoMap );
+
+			}
+
+			materialAOScale.setValue( material.aoMapIntensity );
+
+		}
+
+		if ( material.emissiveMap !== undefined ) {
+
+			materialEmissiveMapEnabled.setValue( material.emissiveMap !== null );
+
+			if ( material.emissiveMap !== null ) {
+
+				materialEmissiveMap.setValue( material.emissiveMap );
+
+			}
+
+		}
+
+		if ( material.side !== undefined ) {
+
+			materialSide.setValue( material.side );
+
+		}
+
+		if ( material.shading !== undefined ) {
+
+			materialShading.setValue( material.shading );
+
+		}
+
+		if ( material.blending !== undefined ) {
+
+			materialBlending.setValue( material.blending );
+
+		}
+
+		if ( material.opacity !== undefined ) {
+
+			materialOpacity.setValue( material.opacity );
+
+		}
+
+		if ( material.transparent !== undefined ) {
+
+			materialTransparent.setValue( material.transparent );
+
+		}
+
+		if ( material.alphaTest !== undefined ) {
+
+			materialAlphaTest.setValue( material.alphaTest );
+
+		}
+
+		if ( material.wireframe !== undefined ) {
+
+			materialWireframe.setValue( material.wireframe );
+
+		}
+
+		if ( material.wireframeLinewidth !== undefined ) {
+
+			materialWireframeLinewidth.setValue( material.wireframeLinewidth );
+
+		}
+
+		setRowVisibility();
+
+	}
+
 
 	function setRowVisibility() {
 
@@ -513,7 +1194,6 @@ MatBar.Paras = function(editor){
 			'shininess': materialShininessRow,
 			'clearCoat': materialClearCoatRow,
 			'clearCoatRoughness': materialClearCoatRoughnessRow,
-			'vertexShader': materialProgramRow,
 			'vertexColors': materialVertexColorsRow,
 			'skinning': materialSkinningRow,
 			'map': materialMapRow,
@@ -546,5 +1226,6 @@ MatBar.Paras = function(editor){
 		}
 
 	}
+
 	return container;
 }

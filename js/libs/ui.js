@@ -511,7 +511,7 @@ UI.Color.prototype.getValue = function () {
 
 UI.Color.prototype.getHexValue = function () {
 
-	return parseInt( this.dom.value.substr( 1 ), 16 );
+	return parseInt( this.dom.value.substr( 1 ), 16 );//将#去掉，把颜色值转换为16进制
 
 };
 

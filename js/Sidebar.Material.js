@@ -535,6 +535,8 @@ Sidebar.Material = function ( editor ) {
 
 			if ( material.color !== undefined && material.color.getHex() !== materialColor.getHexValue() ) {
 
+				//console.log(materialColor.getHexValue())  16711935  12632256
+
 				editor.execute( new SetMaterialColorCommand( currentObject, 'color', materialColor.getHexValue() ) );
 
 			}

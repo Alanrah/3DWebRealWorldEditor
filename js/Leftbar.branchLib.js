@@ -1,17 +1,4 @@
-//用户分支中的material信息
-var Mat = function(name){
-
-	this.name = name;
-	//var material = new THREE.MeshStandardMaterial();
-}
-Mat.prototype = {
-	setType: function ( value ) {
-
-		this.type = value;
-
-	}
-
-}
+//用户分支中的material信息,ThreeJS的
 
 //用户的分支信息
 var Branch = function(name){
