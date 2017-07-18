@@ -417,21 +417,37 @@ MatBar.Paras = function(editor){
 	container.add( materialWireframeRow );
 
 	var materialSave = new UI.Row();
-	var materialSaveButton = new UI.Button( 'save' ).setMarginLeft( '90px' ).onClick( function () {
+	var materialSaveButton = new UI.Button( 'save' ).setMarginLeft( '55px' ).onClick( function () {
 
-		leftbar.currentMaterial = currentMaterial; //返回该material
-		viewport.setLeft('300px');
-		matbar.setDisplay('none');//关闭编辑窗口
-
+		currentMat = currentMaterial; //赋值成功
+		//返回该material,不必关闭窗口
+		console.log(currentMaterial);
+		//console.log(branchLib),全局变量，成功
+		branchLib.flag = true;
+		//save之后重新开始编辑参数
+		currentObject.material = new THREE.MeshStandardMaterial();
+		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
 	} );
+
 	var materialQuit = new UI.Button( 'quit' ).setMarginLeft( '7px' ).onClick( function () {
 
 		currentObject.material = new THREE.MeshStandardMaterial();
 		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
 
 	} );
+
+	var materialExit = new UI.Button( 'exit' ).setMarginLeft( '7px' ).onClick( function () {
+
+		currentObject.material = new THREE.MeshStandardMaterial();
+		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+		viewport.setLeft('300px');
+		matbar.setDisplay('none');//关闭编辑窗口
+
+	} );
 	materialSave.add(materialSaveButton);
 	materialSave.add(materialQuit);
+	materialSave.add(materialExit);
+
 	container.add(materialSave);
 
 	refreshUI();
@@ -898,9 +914,6 @@ MatBar.Paras = function(editor){
 
 			if( material.uuid !== null ){
 				materialUUID.setValue( material.uuid );
-			}
-			else{
-				materialUUID.setValue("");
 			}
 
 		}

@@ -27,6 +27,7 @@ Branch.prototype = {
 var BranchLib = function(){
 	this.branchArray = new Array();
 	this.changed = false;
+	this.flag = false;//监视是否有新的mat
 }
 BranchLib.prototype = {
 	addBranch:function(branch){
