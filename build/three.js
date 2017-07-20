@@ -1075,6 +1075,8 @@
 		},
 
 		toJSON: function ( meta ) {
+			//console.log(this),材质map中的texture，调用this.*map.toJSON(meta).uuid
+   			//console.log(meta)//objects
 
 			if ( meta.textures[ this.uuid ] !== undefined ) {
 
@@ -7214,8 +7216,9 @@
 		},
 
 		toJSON: function ( meta ) {
-
+			//console.log(this)//this 是一个 material 材质
 			var isRoot = meta === undefined;
+			//console.log(meta):object
 
 			if ( isRoot ) {
 
@@ -7253,6 +7256,7 @@
 
 			if ( this.map && this.map.isTexture ) data.map = this.map.toJSON( meta ).uuid;
 			if ( this.alphaMap && this.alphaMap.isTexture ) data.alphaMap = this.alphaMap.toJSON( meta ).uuid;
+			//console.log(this.alphaMap.toJSON( meta ).uuid),alphaMap的uuid
 			if ( this.lightMap && this.lightMap.isTexture ) data.lightMap = this.lightMap.toJSON( meta ).uuid;
 			if ( this.bumpMap && this.bumpMap.isTexture ) {
 
@@ -7276,7 +7280,7 @@
 			if ( this.roughnessMap && this.roughnessMap.isTexture ) data.roughnessMap = this.roughnessMap.toJSON( meta ).uuid;
 			if ( this.metalnessMap && this.metalnessMap.isTexture ) data.metalnessMap = this.metalnessMap.toJSON( meta ).uuid;
 
-			if ( this.emissiveMap && this.emissiveMap.isTexture ) data.emissiveMap = this.emissiveMap.toJSON( meta ).uuid;
+			if ( this.emissiveMap && this.emissiveMap.isTexture ){ data.emissiveMap = this.emissiveMap.toJSON( meta ).uuid;}
 			if ( this.specularMap && this.specularMap.isTexture ) data.specularMap = this.specularMap.toJSON( meta ).uuid;
 
 			if ( this.envMap && this.envMap.isTexture ) {

@@ -54,8 +54,8 @@ MatBar.Paras = function(editor){
 	// name
 
 	var materialNameRow = new UI.Row();
-	var materialName = new UI.Input().setWidth( '150px' ).setFontSize( '12px' ).onChange( function () {
-
+	var materialName = new UI.Input("").setWidth( '150px' ).setFontSize( '12px' ).onChange( function () {
+		
 		updateMat();
 
 	} );
@@ -419,20 +419,28 @@ MatBar.Paras = function(editor){
 	var materialSave = new UI.Row();
 	var materialSaveButton = new UI.Button( 'save' ).setMarginLeft( '55px' ).onClick( function () {
 
-		currentMat = currentMaterial; //赋值成功
-		//返回该material,不必关闭窗口
-		console.log(currentMaterial);
-		//console.log(branchLib),全局变量，成功
-		branchLib.flag = true;
-		//save之后重新开始编辑参数
-		currentObject.material = new THREE.MeshStandardMaterial();
-		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+		if(currentMaterial.name == ""){
+			alert("请输入材质名称！")
+		}
+		else{
+			currentMat = currentMaterial; //赋值成功
+			console.log(currentMat);
+			branchLib.flag = true;
+			//save之后重新开始编辑参数
+			//branchLib.branchArray[0].ownMat.push(currentMat);
+			currentObject.material = new THREE.MeshStandardMaterial();
+			currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+			refreshUI();
+		}
+		
+
 	} );
 
 	var materialQuit = new UI.Button( 'quit' ).setMarginLeft( '7px' ).onClick( function () {
 
 		currentObject.material = new THREE.MeshStandardMaterial();
 		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+		refreshUI();
 
 	} );
 
@@ -440,6 +448,7 @@ MatBar.Paras = function(editor){
 
 		currentObject.material = new THREE.MeshStandardMaterial();
 		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+
 		viewport.setLeft('300px');
 		matbar.setDisplay('none');//关闭编辑窗口
 
@@ -474,13 +483,13 @@ MatBar.Paras = function(editor){
 
 			if ( currentMaterial.uuid !== undefined && currentMaterial.uuid !== materialUUID.getValue() ) {
 
-				currentMaterial.uuid = materialUUID.getValue()
+				currentMaterial.uuid = materialUUID.getValue();
 
 			}
 
-			if ( currentMaterial.name !== undefined && currentMaterial.name !== materialName.getValue() ) {
+			if ( currentMaterial.name !== undefined && currentMaterial.name !== materialName.getValue()) {
 
-				currentMaterial.name = materialName.getValue()
+				currentMaterial.name = materialName.getValue();
 
 			}
 
@@ -918,7 +927,7 @@ MatBar.Paras = function(editor){
 
 		}
 
-		if ( material.name !== undefined ) {
+		if ( material.name !== undefined) {
 
 			materialName.setValue( material.name );
 
@@ -1229,8 +1238,6 @@ MatBar.Paras = function(editor){
 			'alphaTest': materialAlphaTestRow,
 			'wireframe': materialWireframeRow
 		};
-
-		var material = new THREE.LineBasicMaterial();;
 
 		for ( var property in properties ) {
 			//若该属性不属于matarial，则不显示

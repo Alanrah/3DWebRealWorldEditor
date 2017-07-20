@@ -40,6 +40,7 @@ Sidebar.Material = function ( editor ) {
 	managerRow.add( new UI.Button( 'Copy' ).setMarginLeft( '4px' ).onClick( function () {
 
 		copiedMaterial = currentObject.material;
+		//console.log(copiedMaterial)
 
 	} ) );
 

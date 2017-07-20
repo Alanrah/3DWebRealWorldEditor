@@ -11,9 +11,6 @@ Branch.prototype = {
 	editBranch: function(newName){
 		this.name = newName;
 	},
-	addMaterial: function(mat){//mat是个object
-		this.ownMat.push(mat);
-	},
 	delMaterial: function(matidx){
 		this.ownMat.splice(matidx,1);
 	},

@@ -20,27 +20,9 @@ var Leftbar = function ( editor ) {
     branchUL.setId( "branchULClass" );
     branchDiv.add( branchUL );
     container.add( branchDiv );
-    
-
-    //本地存储branchlib的信息的变量,变量名和构造器的名字不能相同
-    
 
     function saveChange(){
-        //变量转换成json数据存储在localstorage，每次改变都刷新重新写入
-        if(branchLib.changed === true){
-            var branchLibJson = JSON.stringify(branchLib);
-            if(localStorage.getItem("branchLibJson")){
-                localStorage.removeItem("branchLibJson"); 
-                localStorage.setItem("branchLibJson",branchLibJson); 
-            }
-            else{
-                localStorage.setItem("branchLibJson",branchLibJson);
-            }
-            branchLib.changed = false;
-            //console.log(localStorage.getItem("branchLibJson"))
-            //console.log(branchLib);
-            //console.log(branchUL);
-        }
+        //修改indexedDB
     }
     //init branchLib and branchUL
 
@@ -72,6 +54,7 @@ var Leftbar = function ( editor ) {
             }
             return branchName;
     }
+
     function addBranchLib(branchName){
         var branch = new Branch(branchName);
         branchLib.addBranch(branch);
@@ -195,44 +178,24 @@ var Leftbar = function ( editor ) {
     function addMaterial(li){
       
         if(branchLib.flag == true && currentMat !== null){
-            console.log(currentMat);
-            addMatLib(li,currentMat);
+            addMatLib(li);
             addMatLi(li,currentMat.name);
         }
-        console.log('branchLib.flag')
-        console.log(branchLib.flag)
         console.log(branchLib)
         currentMat = null;
         branchLib.flag = false;
-
-/*方便自测
-        if(confirm("yes 新建mat，no 新建空mat")){
-            //改变全局变量viewport的宽度
-            viewport.setLeft('601px');
-            matbar.setDisplay('block');
-        }
-        else{
-            var materialName = matNameInput(li);
-            if(materialName && materialName !== 0){
-
-                addMatLib(li,materialName);
-                addMatLi(li,materialName);
-            }
-            else{
-                alert("添加失败，无效materialName！")
-            }  
-        }
-        */
         }
 
 
-
-    function addMatLib(li,currentMaterial){
+    function addMatLib(li){
         var i = findBranch(li.firstChild.firstChild.textContent);
         if(i>=0){
-            branchLib.branchArray[i].addMaterial(currentMaterial);
+            var j = branchLib.branchArray[i].ownMat.length;
+            branchLib.branchArray[i].ownMat.push(currentMat);
+            //branchLib.branchArray[i].ownMat[j]=currentMat;
+            console.log(branchLib)
             branchLib.changed = true;
-            saveChange();
+            //saveChange();
         }
         else{alert("addMatLib 中该branch不存在")}
         
