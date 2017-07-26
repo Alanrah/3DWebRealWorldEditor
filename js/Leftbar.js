@@ -1,8 +1,9 @@
 /**
  * @author Catherine / https://github.com/Alanrah/
  */
-var branchLib = new BranchLib();
-var currentMat = null;
+var branchLib = new BranchLib(); 
+var currentMat = new THREE.MeshStandardMaterial();
+var currentMatFlag = false;
 
 var Leftbar = function ( editor ) {
 
@@ -216,7 +217,13 @@ var Leftbar = function ( editor ) {
               }
             }
             document.onmouseup = function(e){
-                dragMaterial(lli,materialName,document.elementFromPoint(e.clientX,e.clientY));
+                if(e.clientX > 300){//拖动到viewport
+                    dragMaterialToView();
+                }
+                else{//拖动到分支
+                    dragMaterialToBranch(lli,materialName,document.elementFromPoint(e.clientX,e.clientY));
+                }
+                
                 drag   = false;
             }*/
         var del = new UI.Button( 'del' ).setWidth( "40px" ).onClick(function(){delMaterial(li.dom,materialName);});
@@ -245,15 +252,19 @@ var Leftbar = function ( editor ) {
     }
 
     function editMaterial(li,materialName){
-        console.log(li.parentNode.parentNode.firstChild.firstChild.textContent)
         var i = findBranch(li.parentNode.parentNode.firstChild.firstChild.textContent);
         if(i>=0){
-            var j = findMat( branchLib.branchArray[i].ownMat,materialName);
+            var j = findMat( branchLib.branchArray[i].ownMat , materialName);
             if(j>=0){
-                branchLib.branchArray[i].editMaterial(j);
-                alert("该功能暂时不完善")
-                branchLib.changed = true;
-                saveChange();
+
+                currentMat = branchLib.branchArray[i].ownMat[j];
+                branchLib.branchArray[i].delMaterial(j);
+                li.parentNode.removeChild(li);
+                currentMatFlag = true;
+                matBar();
+                console.log('edit 功能不完善');
+                console.log(currentMat);
+
             }
             else{alert("editMatLib 中该mat不存在")}
         }
@@ -261,8 +272,22 @@ var Leftbar = function ( editor ) {
         
     }
 
+
+function matBar(){
+        viewport.setLeft('601px');
+        matbar.setDisplay('block');
+    }
+
+
+
+function dragMaterialToView(){
+
+}
+
+
+
 //要将lli分支下的materialname拖动到elementFromPoint(e.clientX,e.clientY)
-function dragMaterial(lli,materialName,elem){
+function dragMaterialToBranch(lli,materialName,elem){
 
     var x = findBranch(lli.firstChild.firstChild.textContent);
     var branch = branchLib.branchArray[x];
@@ -318,15 +343,34 @@ console.log('jinlai1')
         saveChange();
 }
     
+
+
+
     container.add(addBranchRow);
 
 
     var addMatRow = new UI.Row();
     addMatRow.add( new UI.Button( 'New Mat' ).setTop("3px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
-        viewport.setLeft('601px');
-        matbar.setDisplay('block');
+        matBar();
     }));
     container.add(addMatRow);
+ 
+    var saveMatRow = new UI.Row();
+    saveMatRow.add( new UI.Button( 'save to your matLib' ).setTop("7px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
+        alert("materialDB put");
+        materialdb.set(branchLib);
+    }));
+    container.add(saveMatRow);
 
+    var saveMatRow = new UI.Row();
+    saveMatRow.add( new UI.Button( 'get your matLib' ).setTop("10px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
+        //读取的结果一直是 undefined
+        materialdb.get(function(e){
+            console.log(e);
+        });
+        
+
+    }));
+    container.add(saveMatRow);
     return container;
 }

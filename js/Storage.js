@@ -23,21 +23,23 @@ var Storage = function () {
 
 		init: function ( callback ) {
 
+			//一个单独的数据库可以包含任意数量的对象存储空间
 			var request = indexedDB.open( name, version );
+
 			request.onupgradeneeded = function ( event ) {
 
-				var db = event.target.result;
+				var db = event.target.result;//request.result 是一个 IDBDatabase 的实例
 				//创建了一个名为‘states’的数据存储
 				if ( db.objectStoreNames.contains( 'states' ) === false ) {
 
-					db.createObjectStore( 'states' );
+					db.createObjectStore( 'states' );//IndexedDB 使用对象存储空间而不是表
 
 				}
 
 			};
 			request.onsuccess = function ( event ) {
 
-				database = event.target.result;
+				database = event.target.result;//database = request.result;
 
 				callback();
 
@@ -47,8 +49,7 @@ var Storage = function () {
 				console.error( 'IndexedDB', event );
 
 			};
-
-
+			
 		},
 
 		get: function ( callback ) {
@@ -70,6 +71,7 @@ var Storage = function () {
 
 			var transaction = database.transaction( [ 'states' ], 'readwrite' );
 			var objectStore = transaction.objectStore( 'states' );
+			
 			var request = objectStore.put( data, 0 );
 			request.onsuccess = function ( event ) {
 

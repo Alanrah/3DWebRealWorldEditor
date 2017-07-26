@@ -1,12 +1,9 @@
 MatBar.Paras = function(editor){
-
-	//console.log(leftbar.branchLib);cannot read property 'branchLib' of undefined at new MatBar.Paras
-	//console.log(leftbar.currentMaterial);Cannot read property 'currentMaterial' of undefined
 	
 	var container = new UI.Panel();//DIV
 	container.setId('paras');
 	
-	var currentObject = new THREE.Mesh(new THREE.BoxBufferGeometry(4,4,4),new THREE.MeshStandardMaterial());
+	var currentObject = new THREE.Mesh(new THREE.BoxBufferGeometry(4,4,4),currentMat);//新建时为标准，修改时为修改前的材质
 	var currentMaterial = currentObject.material;//初始化,后续currentMaterial变化时不需要改变currentObject
 	var currentGeometry = currentObject.geometry;
 
@@ -438,16 +435,14 @@ MatBar.Paras = function(editor){
 
 	var materialQuit = new UI.Button( 'quit' ).setMarginLeft( '7px' ).onClick( function () {
 
-		currentObject.material = new THREE.MeshStandardMaterial();
-		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+		initCurrentMat();
 		refreshUI();
 
 	} );
 
 	var materialExit = new UI.Button( 'exit' ).setMarginLeft( '7px' ).onClick( function () {
 
-		currentObject.material = new THREE.MeshStandardMaterial();
-		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+		initCurrentMat();
 
 		viewport.setLeft('300px');
 		matbar.setDisplay('none');//关闭编辑窗口
@@ -462,6 +457,11 @@ MatBar.Paras = function(editor){
 	refreshUI();
 
 	
+	function initCurrentMat(){
+		currentObject.material = new THREE.MeshStandardMaterial();
+		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+		currentMat = new THREE.MeshStandardMaterial();
+	}
 	function updateMat(){
 
 		var textureWarning = false;

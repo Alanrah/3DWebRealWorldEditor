@@ -106,7 +106,7 @@
         <script src="js/MatBar.js"></script>
         <script src='js/MatBar.Preview.js'></script>
         <script src='js/MatBar.Paras.js'></script>
-        <script src="js/Leftbar.Storage.js"></script>
+        <script src="js/MatStorage.js"></script>
         
 
 		<script src="js/Sidebar.js"></script>
@@ -201,6 +201,10 @@
 
             var leftbar = new Leftbar(editor);
             document.body.appendChild( leftbar.dom );
+
+            var materialdb = new MatStorage();
+            materialdb.init();//新建这个数据库
+            //put(branchLib,0)，只在index=0的地方put最新数据，页面关闭时再更新数据库
 
 			var modal = new UI.Modal();
 			document.body.appendChild( modal.dom );
