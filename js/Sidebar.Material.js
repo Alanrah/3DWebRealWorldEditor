@@ -30,7 +30,7 @@ Sidebar.Material = function ( editor ) {
 	managerRow.add( new UI.Text( '' ).setWidth( '90px' ) );
 	managerRow.add( new UI.Button( 'New' ).onClick( function () {
 
-		var material = new THREE[ materialClass.getValue() ]();
+		var material = new THREE[ materialClass.getValue() ]();//新建一种material
 		//execute: function ( cmd, optionalName ) 
 		editor.execute( new SetMaterialCommand( currentObject, material ), 'New Material: ' + materialClass.getValue() );
 		update();
@@ -1003,6 +1003,15 @@ Sidebar.Material = function ( editor ) {
 
 
 	function refreshUI( resetTextureSelectors ) {
+		/*
+		addlistener（拖动状态，{
+			if (拖动mat状态)
+				material = 拖动物体的material
+				else
+				material = 如下
+		}）
+		 */
+
 
 		if ( ! currentObject ) return;
 
@@ -1297,7 +1306,7 @@ Sidebar.Material = function ( editor ) {
 		if ( object && object.material &&
 			Array.isArray( object.material ) === false ) {
 
-			var objectChanged = object !== currentObject;
+			var objectChanged = object !== currentObject;// true or false
 
 			currentObject = object;
 			refreshUI( objectChanged );

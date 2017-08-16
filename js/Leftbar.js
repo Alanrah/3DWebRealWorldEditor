@@ -2,8 +2,9 @@
  * @author Catherine / https://github.com/Alanrah/
  */
 var branchLib = new BranchLib(); 
-var currentMat = new THREE.MeshStandardMaterial();
-var currentMatFlag = false;
+var currentMat = new THREE.MeshStandardMaterial();// leftbar 当前生成的 mat
+
+var dragMat = currentMat; 
 
 var Leftbar = function ( editor ) {
 
@@ -159,6 +160,7 @@ var Leftbar = function ( editor ) {
         return -1;
     }
     function matNameInput(li){
+
         var name = li.firstChild.firstChild.textContent;
         var materialName = prompt("Please input the New material Name");
         //如果重名，重新输入或者放弃
@@ -185,10 +187,12 @@ var Leftbar = function ( editor ) {
         console.log(branchLib)
         currentMat = null;
         branchLib.flag = false;
+
         }
 
 
     function addMatLib(li){
+
         var i = findBranch(li.firstChild.firstChild.textContent);
         if(i>=0){
             var j = branchLib.branchArray[i].ownMat.length;
@@ -203,11 +207,60 @@ var Leftbar = function ( editor ) {
     }
 
     function addMatLi(lli,materialName){
+
         var li = new UI.Li();
         li.setClass("material");
         li.setMarginLeft("30px").setWidth("250px");
         var drag = false;
-        var name = new UI.Button( materialName ).setWidth( "160px" ).setClass("matButton").setCursor("move");
+        var name = new UI.Button( materialName ).setWidth( "160px" ).setDraggable( "true" ).setClass( "matButton" ).setCursor( "move" );
+
+        name.dom.addEventListener( 'mousedown' , onMatMousedown(name.dom,event),false);
+
+        function onMatMousedown (butt,e){
+
+            console.log(butt);
+            console.log(e);
+            //e.dataTransfer.setData("Text", event.target.id);
+            var i = findBranch(lli.firstChild.firstChild.textContent);
+
+            if(i>=0){
+
+                var  j = findMat(branchLib.branchArray[i].ownMat,materialName);
+
+                if(j >= 0){
+
+                    dragMat = branchLib.branchArray[i].ownMat[j];
+
+                }
+
+                else{
+
+                    alert(" 拖动无效material ！");
+
+                }
+            }
+
+            else{
+
+                alert(" 拖动无效branch下的material ！")
+
+            }
+
+            console.log(dragMat);
+            document.addEventListener( 'mouseup', onMatMouseup, false );
+        }
+
+        function onMatMouseup( e ) {
+
+            e.preventDefault();
+            console.log(e.clientX+" "+e.clientY);
+            console.log(document.elementFromPoint(e.clientX,e.clientY));
+
+            new dragToChangeMat(editor,e);
+
+            document.removeEventListener( 'mouseup', onMatMouseup, false );
+
+        }
            /* name.dom.onmousedown = function(e){
               drag   = true;
             }
@@ -277,12 +330,6 @@ function matBar(){
         viewport.setLeft('601px');
         matbar.setDisplay('block');
     }
-
-
-
-function dragMaterialToView(){
-
-}
 
 
 
@@ -373,4 +420,4 @@ console.log('jinlai1')
     }));
     container.add(saveMatRow);
     return container;
-}
+} 

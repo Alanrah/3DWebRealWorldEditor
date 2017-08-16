@@ -53,7 +53,8 @@ var Viewport = function ( editor ) {
 	var objectRotationOnDown = null;
 	var objectScaleOnDown = null;
 
-	var transformControls = new THREE.TransformControls( camera, container.dom );
+	//对 viewport 中的object的移动 旋转 缩放
+	var transformControls = new THREE.TransformControls( camera, container.dom );//创建动画和移动相机，绑定到camera，指向container场景所在的元素
 	transformControls.addEventListener( 'change', function () {
 
 		var object = transformControls.object;
@@ -135,18 +136,41 @@ var Viewport = function ( editor ) {
 	sceneHelpers.add( transformControls );
 
 	// object picking
-
+	//Three.js提供一个射线类Raycaster来拾取场景里面的物体。更方便的使用鼠标来操作3D场景。
+	//从某个方向发射一条射线，穿过鼠标所在的点，则这条射线经过的对象就是鼠标点击的对象
+	//射线法获取鼠标选择的元素，然后修元素的材质。
 	var raycaster = new THREE.Raycaster();
+	//raycaster : http://blog.csdn.net/u014658748/article/details/51074840
+	//mouse，鼠标所对应的二维向量,监听鼠标移动事件
+	//mouse.x是指 鼠标的x到屏幕y轴的距离与屏幕宽的一半的比值 绝对值不超过1
+    //mouse.y是指 鼠标的y到屏幕x轴的距离与屏幕宽的一半的比值 绝对值不超过1
+    //下面的矩形是显示器屏幕，三维空间坐标系的布局以及屏幕的二维坐标系
+                //
+                // 鼠标是从  二维坐标系
+                // 这个点 .-------------------------------------------|-->鼠标x正半轴
+                //  开始算|                    | y     /              |
+                //   x,y  |                    |     /                |
+                //        |                    |   /                  |
+                //        |          三维坐标系| /                    |
+                //        | -------------------/-------------------->x|
+                //        |                  / |                      |
+                //        |                /   |                      |
+                //        |              /     |                      |
+                //        |__________Z_/_______|______________________|
+                //        |
+                // 鼠标y  \/
+                // 正半轴
 	var mouse = new THREE.Vector2();
 
 	// events
 
 	function getIntersects( point, objects ) {
-
+		//将html坐标系转化为webgl坐标系，并确定鼠标点击位置
 		mouse.set( ( point.x * 2 ) - 1, - ( point.y * 2 ) + 1 );
-
+		 //从相机发射一条射线，经过鼠标点击位置
 		raycaster.setFromCamera( mouse, camera );
-
+		//camera 到 mouse 之间穿过的物体
+		//确定所点击位置上的物体数量
 		return raycaster.intersectObjects( objects );
 
 	}
@@ -155,28 +179,28 @@ var Viewport = function ( editor ) {
 	var onUpPosition = new THREE.Vector2();
 	var onDoubleClickPosition = new THREE.Vector2();
 
-	function getMousePosition( dom, x, y ) {
+	function getMousePosition( dom, x, y ) {//dom = container.dom, x = event.clientX,  y = event.clientY
 
-		var rect = dom.getBoundingClientRect();
+		var rect = dom.getBoundingClientRect();//getBoundingClientRect用于获得页面中某个元素的左，上，右和下分别相对浏览器视窗的位置。
 		return [ ( x - rect.left ) / rect.width, ( y - rect.top ) / rect.height ];
 
 	}
 
 	function handleClick() {
 
-		if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {
+		if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) { // 鼠标 down 到 up之间的 move 长度不为 0 时
 
 			var intersects = getIntersects( onUpPosition, objects );
-
+			// 拾取物体数大于0时  
 			if ( intersects.length > 0 ) {
-
+				//获取第一个物体 
 				var object = intersects[ 0 ].object;
 
 				if ( object.userData.object !== undefined ) {
 
 					// helper
 
-					editor.select( object.userData.object );
+					editor.select( object.userData.object );// 选中该 object
 
 				} else {
 
