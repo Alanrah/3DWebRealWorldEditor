@@ -4,7 +4,9 @@
 var branchLib = new BranchLib(); 
 var currentMat = new THREE.MeshStandardMaterial();// leftbar 当前生成的 mat
 
-var dragMat = currentMat; 
+var dragMat = currentMat;
+var dragMatFlag = false;
+var dragMatPoint = new THREE.Vector2();
 
 var Leftbar = function ( editor ) {
 
@@ -184,7 +186,7 @@ var Leftbar = function ( editor ) {
             addMatLib(li);
             addMatLi(li,currentMat.name);
         }
-        console.log(branchLib)
+        console.log(branchLib);
         currentMat = null;
         branchLib.flag = false;
 
@@ -198,7 +200,6 @@ var Leftbar = function ( editor ) {
             var j = branchLib.branchArray[i].ownMat.length;
             branchLib.branchArray[i].ownMat.push(currentMat);
             //branchLib.branchArray[i].ownMat[j]=currentMat;
-            console.log(branchLib)
             branchLib.changed = true;
             //saveChange();
         }
@@ -214,22 +215,30 @@ var Leftbar = function ( editor ) {
         var drag = false;
         var name = new UI.Button( materialName ).setWidth( "160px" ).setDraggable( "true" ).setClass( "matButton" ).setCursor( "move" );
 
+        name.dom.addEventListener( 'click' , onMatMouseclick(name.dom,event),false);
         name.dom.addEventListener( 'mousedown' , onMatMousedown(name.dom,event),false);
+
+        document.addEventListener( 'mousemove',onMatMousemove,false );
+        document.addEventListener( 'mouseup', onMatMouseup, false );
+
+        function onMatMouseclick(e){
+
+            //将该mat显示到matbar.paras，并更新
+            //暂时的editmaterial = deletemat + new Mat
+        }
 
         function onMatMousedown (butt,e){
 
-            console.log(butt);
-            console.log(e);
-            //e.dataTransfer.setData("Text", event.target.id);
             var i = findBranch(lli.firstChild.firstChild.textContent);
 
-            if(i>=0){
+            if( i>=0 ) {
 
                 var  j = findMat(branchLib.branchArray[i].ownMat,materialName);
 
-                if(j >= 0){
+                if( j >= 0 ){
 
                     dragMat = branchLib.branchArray[i].ownMat[j];
+                    console.log('确定dragmat');
 
                 }
 
@@ -245,20 +254,30 @@ var Leftbar = function ( editor ) {
                 alert(" 拖动无效branch下的material ！")
 
             }
+            
+        }
 
-            console.log(dragMat);
-            document.addEventListener( 'mouseup', onMatMouseup, false );
+        function onMatMousemove(e){
+
+            e.preventDefault();
+
         }
 
         function onMatMouseup( e ) {
 
             e.preventDefault();
-            console.log(e.clientX+" "+e.clientY);
-            console.log(document.elementFromPoint(e.clientX,e.clientY));
 
-            new dragToChangeMat(editor,e);
+            if(document.elementFromPoint(e.clientX,e.clientY).tagName.toUpperCase() == 'CANVAS'){
 
-            document.removeEventListener( 'mouseup', onMatMouseup, false );
+                dragMatFlag = true;
+                console.log('dragMatFlag为true')
+                dragMatPoint.set( e.clientX,e.clientY );
+
+            }
+            
+            //一旦remove 就只能mousedown mouseup 一次
+            //document.removeEventListener( 'mouseup', onMatMouseup, false );
+            
 
         }
            /* name.dom.onmousedown = function(e){

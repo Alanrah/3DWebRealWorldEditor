@@ -1299,6 +1299,8 @@ Sidebar.Material = function ( editor ) {
 
 	}
 
+	var yy = setInterval(refreshUI(),100);
+
 	// events
 
 	signals.objectSelected.add( function ( object ) {

@@ -265,7 +265,6 @@ var Viewport = function ( editor ) {
 		document.removeEventListener( 'touchend', onTouchEnd, false );
 
 	}
-
 	function onDoubleClick( event ) {
 
 		var array = getMousePosition( container.dom, event.clientX, event.clientY );
@@ -282,6 +281,39 @@ var Viewport = function ( editor ) {
 		}
 
 	}
+
+	var x = setInterval( function () {
+
+		console.log(dragMatFlag)
+
+		if( dragMatFlag == true ){
+
+			var xonUpPosition = new THREE.Vector2();
+			var xarray = getMousePosition( container.dom, dragMatPoint.x, dragMatPoint.y );
+			xonUpPosition.fromArray( xarray );
+
+			console.log( '进入interval' )
+
+			var xraycaster = new THREE.Raycaster();
+
+			var xmouse = new THREE.Vector2();
+			xmouse.set( ( xonUpPosition.x * 2 ) - 1, - ( xonUpPosition.y * 2 ) + 1 );
+
+			xraycaster.setFromCamera( xmouse, camera );
+
+			var xintersects = xraycaster.intersectObjects( scene.children );
+
+			if ( xintersects.length > 0 ) {
+
+				console.log( '确定object' );
+				console.log( xintersects[0].object );
+				editor.execute( new SetMaterialCommand( xintersects[0].object, dragMat ), 'Pasted Material: ' + dragMat.type );
+				render();
+			}
+		}
+		dragMatFlag = false;
+	}, 500);
+	
 
 	container.dom.addEventListener( 'mousedown', onMouseDown, false );
 	container.dom.addEventListener( 'touchstart', onTouchStart, false );

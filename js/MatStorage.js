@@ -38,7 +38,7 @@ MatStorage = function(){
                 
                 //IDBOpenDBRequest {onblocked: null, result: IDBDatabase, error: null, 
                 //source: null, onupgradeneeded: function
-                console.log(request)
+                //console.log(request)
 
                 //callback();
 
