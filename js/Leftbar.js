@@ -8,6 +8,15 @@ var dragMat = currentMat;
 var dragMatFlag = false;
 var dragMatPoint = new THREE.Vector2();
 
+var Signal = signals.Signal;
+var mySignals = {
+
+    dragMatFlag: new Signal(),
+    sidebarFreshUI: new Signal(),
+    matbarFreshUI: new Signal()
+
+};
+
 var Leftbar = function ( editor ) {
 
     var container = new UI.Panel();
@@ -215,8 +224,8 @@ var Leftbar = function ( editor ) {
         var drag = false;
         var name = new UI.Button( materialName ).setWidth( "160px" ).setDraggable( "true" ).setClass( "matButton" ).setCursor( "move" );
 
-        name.dom.addEventListener( 'click' , onMatMouseclick(name.dom,event),false);
-        name.dom.addEventListener( 'mousedown' , onMatMousedown(name.dom,event),false);
+        name.dom.addEventListener( 'click' , onMatMouseclick,false);
+        name.dom.addEventListener( 'mousedown' , onMatMousedown,false);
 
         document.addEventListener( 'mousemove',onMatMousemove,false );
         document.addEventListener( 'mouseup', onMatMouseup, false );
@@ -227,7 +236,7 @@ var Leftbar = function ( editor ) {
             //暂时的editmaterial = deletemat + new Mat
         }
 
-        function onMatMousedown (butt,e){
+        function onMatMousedown (e){
 
             var i = findBranch(lli.firstChild.firstChild.textContent);
 
@@ -272,6 +281,7 @@ var Leftbar = function ( editor ) {
                 dragMatFlag = true;
                 console.log('dragMatFlag为true')
                 dragMatPoint.set( e.clientX,e.clientY );
+                mySignals.dragMatFlag.dispatch();
 
             }
             
@@ -332,10 +342,8 @@ var Leftbar = function ( editor ) {
                 currentMat = branchLib.branchArray[i].ownMat[j];
                 branchLib.branchArray[i].delMaterial(j);
                 li.parentNode.removeChild(li);
-                currentMatFlag = true;
                 matBar();
-                console.log('edit 功能不完善');
-                console.log(currentMat);
+                mySignals.matbarFreshUI.dispatch();
 
             }
             else{alert("editMatLib 中该mat不存在")}

@@ -1299,7 +1299,7 @@ Sidebar.Material = function ( editor ) {
 
 	}
 
-	var yy = setInterval(refreshUI(),100);
+	mySignals.sidebarFreshUI.add(refreshUI);
 
 	// events
 

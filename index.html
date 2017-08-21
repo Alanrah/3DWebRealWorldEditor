@@ -268,7 +268,7 @@
 				};
 
 				var signals = editor.signals;
-
+				//一旦某个信号改变就执行saveState
 				signals.geometryChanged.add( saveState );
 				signals.objectAdded.add( saveState );
 				signals.objectChanged.add( saveState );

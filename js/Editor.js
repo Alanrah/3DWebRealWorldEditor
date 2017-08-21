@@ -8,7 +8,7 @@ var Editor = function () {
 	this.DEFAULT_CAMERA.name = 'Camera';
 	this.DEFAULT_CAMERA.position.set( 20, 10, 20 );
 	this.DEFAULT_CAMERA.lookAt( new THREE.Vector3() );
-
+	//store local reference for brevity,通过signals命名空间访问构造函数
 	var Signal = signals.Signal;
 
 	this.signals = {
@@ -157,7 +157,7 @@ Editor.prototype = {
 
 		this.scene.add( object );
 
-		this.signals.objectAdded.dispatch( object );
+		this.signals.objectAdded.dispatch( object );//通过dispatchEvent()方法来将事件应用到特定的dom节点上
 		this.signals.sceneGraphChanged.dispatch();
 
 	},
