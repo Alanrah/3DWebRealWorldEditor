@@ -227,7 +227,7 @@ var Viewport = function ( editor ) {
 		var array = getMousePosition( container.dom, event.clientX, event.clientY );
 		onDownPosition.fromArray( array );
 
-		document.addEventListener( 'mouseup', onMouseUp, false );
+		document.addEventListener( 'mouseup', onMouseUp, false );//document指的是整个html
 
 	}
 
@@ -322,8 +322,6 @@ function dragMatFun(){
 			var xarray = getMousePosition( container.dom, dragMatPoint.x, dragMatPoint.y );
 			xonUpPosition.fromArray( xarray );
 
-			console.log( '进入interval' )
-
 			var xraycaster = new THREE.Raycaster();
 
 			var xmouse = new THREE.Vector2();
@@ -332,13 +330,14 @@ function dragMatFun(){
 			xraycaster.setFromCamera( xmouse, camera );
 
 			var xintersects = xraycaster.intersectObjects( scene.children );
-
-			if ( xintersects.length > 0 ) {
+			//将dragMat设置为null ，防止在viewport中click就直接应用而不是拖动应用
+			if ( xintersects.length > 0 && dragMat != null) {
 
 				console.log( '确定object' );
 				console.log( xintersects[0].object );
 				editor.execute( new SetMaterialCommand( xintersects[0].object, dragMat ), 'Pasted Material: ' + dragMat.type );
 				render();
+				dragMat = null;
 				dragMatFlag = false;
 				mySignals.sidebarFreshUI.dispatch();
 			}

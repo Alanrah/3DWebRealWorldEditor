@@ -424,10 +424,14 @@ MatBar.Paras = function(editor){
 			console.log(currentMat);
 			branchLib.flag = true;
 			//save之后重新开始编辑参数
-			//branchLib.branchArray[0].ownMat.push(currentMat);
-			//currentObject.material = new THREE.MeshStandardMaterial();
-			//currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+			//必须初始化currentMat  不然在元mat上只修改name之后会put相同mat到同一branch
+			currentObject.material = new THREE.MeshStandardMaterial();
+			currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
 			refreshUI();
+
+			var newMatRow = new UI.Row();
+    		newMatRow.add( new UI.Button( currentMat.name ).setTop("20px").setMarginLeft( '10px' ).setWidth( "280px" ).setBackgroundColor("#808983"));
+    		leftbar.add(newMatRow);
 		}
 		
 
@@ -443,9 +447,9 @@ MatBar.Paras = function(editor){
 	var materialExit = new UI.Button( 'exit' ).setMarginLeft( '7px' ).onClick( function () {
 
 		initCurrentMat();
-
-		viewport.setLeft('300px');
 		matbar.setDisplay('none');//关闭编辑窗口
+		viewport.setLeft('300px');
+		
 
 	} );
 	materialSave.add(materialSaveButton);
@@ -1205,7 +1209,7 @@ MatBar.Paras = function(editor){
     function matBarFreshUI(){
     	currentMaterial = currentMat;
     	refreshUI();
-
+    	currentMat = currentObject.material;
     }
     mySignals.matbarFreshUI.add(matBarFreshUI);
     

@@ -8,6 +8,9 @@ var Branch = function(name){
 }
 
 Branch.prototype = {
+	addMaterial:function(currentMat){
+		this.ownMat.push(currentMat);
+	},
 	editBranch: function(newName){
 		this.name = newName;
 	},
