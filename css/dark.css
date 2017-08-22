@@ -3,7 +3,7 @@ button {
 	background-color: #222;
 	border: 0px;
 	padding: 5px 8px;
-	text-transform: uppercase;
+	/*text-transform: uppercase;*/
 	cursor: pointer;
 	outline: none;
 }

@@ -59,7 +59,6 @@ MatStorage = function(){
 
             request.onsuccess = function ( event ) {
 
-                console.log('success');
                 //Event {isTrusted: true, type: "success",
                 // target: IDBRequest, currentTarget: IDBRequest, eventPhase: 2…}
                 //console.log(event);

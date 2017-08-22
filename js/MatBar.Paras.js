@@ -414,7 +414,7 @@ MatBar.Paras = function(editor){
 	container.add( materialWireframeRow );
 
 	var materialSave = new UI.Row();
-	var materialSaveButton = new UI.Button( 'save' ).setMarginLeft( '55px' ).onClick( function () {
+	var materialSaveButton = new UI.Button( 'SAVE' ).setMarginLeft( '55px' ).onClick( function () {
 
 		if(currentMaterial.name == ""){
 			alert("请输入材质名称！")
@@ -437,14 +437,14 @@ MatBar.Paras = function(editor){
 
 	} );
 
-	var materialQuit = new UI.Button( 'quit' ).setMarginLeft( '7px' ).onClick( function () {
+	var materialQuit = new UI.Button( 'QUIT' ).setMarginLeft( '7px' ).onClick( function () {
 
 		initCurrentMat();
 		refreshUI();
 
 	} );
 
-	var materialExit = new UI.Button( 'exit' ).setMarginLeft( '7px' ).onClick( function () {
+	var materialExit = new UI.Button( 'EXIT' ).setMarginLeft( '7px' ).onClick( function () {
 
 		initCurrentMat();
 		matbar.setDisplay('none');//关闭编辑窗口

@@ -24,7 +24,7 @@ var Leftbar = function ( editor ) {
     var container = new UI.Panel();
     container.setId( 'leftbar' );
 
-    var materialTab = new UI.Text( '    MATERIAL EDITOR   ' );
+    var materialTab = new UI.Text( '    Material Library   ' );
     materialTab.setWidth( "272px" ).setColor( "#444" ).setBorderRight( "1px solid #222" ).setPadding( "12px" );
     container.add( materialTab );
 
@@ -85,7 +85,7 @@ var Leftbar = function ( editor ) {
 
         var name = new UI.Button( branchName ).setWidth( "150px" ).setClass("branchButton").onClick(function(){setDDisplay(this.dom.parentNode.parentNode)});
         var add =new UI.Button( 'add' ).setWidth( "40px" ).setClass("branchButton").onClick(function(){
-                addMaterial(this.dom.parentNode.parentNode); //传过去的是当前所造branchUI
+                addMaterial(this.dom.parentNode.parentNode); //传过去的是当前所造branch行
             });
 
         var del = new UI.Button( 'del' ).setWidth( "40px" ).setClass("branchButton").onClick(function(){delBranch(this.dom.parentNode.parentNode);/*console.log(this);del这个button*/});
@@ -100,6 +100,7 @@ var Leftbar = function ( editor ) {
         li.add(new UI.Ul().setMarginTop("1px"));
 
         branchUL.add(li);//this就是branchUL，li是arguments
+        return li.dom;
     }
 
      function setDDisplay(li){
@@ -205,7 +206,7 @@ var Leftbar = function ( editor ) {
         }
 
 
-    function addMatLib(li,currentM){
+    function addMatLib(li,currentM){//li是当前所在的branch行
 
         var i = findBranch(li.firstChild.firstChild.textContent);
         if(i>=0){
@@ -433,25 +434,40 @@ console.log('jinlai1')
     container.add(addBranchRow);
 
     var addMatRow = new UI.Row();
-    addMatRow.add( new UI.Button( 'New Mat' ).setTop("3px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
+    addMatRow.add( new UI.Button( 'New Mat +' ).setTop("3px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
         matBar();
     }));
     container.add(addMatRow);
  
     var saveMatRow = new UI.Row();
-    saveMatRow.add( new UI.Button( 'save to your matLib' ).setTop("7px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
-        alert("materialDB put");
-        materialdb.set(branchLib);
+    saveMatRow.add( new UI.Button( 'Save To Your MatLib' ).setTop("7px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
+        
+        materialdb.set(branchLib,function(e){
+            alert("materialDB put sucess");
+        });
     }));
     container.add(saveMatRow);
 
     var saveMatRow = new UI.Row();
-    saveMatRow.add( new UI.Button( 'get your matLib' ).setTop("10px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
+    saveMatRow.add( new UI.Button( 'Get Your MatLib' ).setTop("10px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
         //读取的结果一直是 undefined
         materialdb.get(function(e){
             console.log(e);
-        });
 
+            branchLib = e;//两类型不匹配，不能直接赋值
+            console.log(branchLib)
+
+            for(var i in branchLib.branchArray){
+
+            var li = addBranchLi(branchLib.branchArray[i].name);
+
+            for(var j in branchLib.branchArray[i].ownMat){
+                addMatLi(li,branchLib.branchArray[i].ownMat[j].name);
+            }
+        }
+
+        console.log(branchUL)
+        });
     }));
     container.add(saveMatRow);
     return container;
