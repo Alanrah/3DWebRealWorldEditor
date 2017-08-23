@@ -8,8 +8,8 @@ var MatBar = function ( editor ){
 	var container = new UI.Panel();
 	container.setId('matbar');
 
-	var preview = new MatBar.Preview(editor);
-	container.add(preview);
+	//var preview = new MatBar.Preview(editor);
+	//container.add(preview);
 
 	var paras = new MatBar.Paras(editor);
 	container.add(paras);

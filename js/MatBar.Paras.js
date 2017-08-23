@@ -416,28 +416,61 @@ MatBar.Paras = function(editor){
 	var materialSave = new UI.Row();
 	var materialSaveButton = new UI.Button( 'SAVE' ).setMarginLeft( '55px' ).onClick( function () {
 
+		if( editMat.editMatFlag == true){
+
+			if(currentMaterial.name == ""){
+
+				alert("请输入材质名称！");
+
+			}
+			else{
+
+				currentMat = currentMaterial; //赋值成功
+				editMat.li.firstChild.textContent = currentMat.name;
+				branchLib.branchArray[editMat.branchIndex].ownMat[editMat.ownMatIndex] = currentMat;
+			
+			}
+
+			editMat.editMatFlag = false;
+			currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
+			currentMat = currentMaterial;
+			refreshUI();
+			console.log(branchLib);
+			return;
+
+		}
+
+
 		if(currentMaterial.name == ""){
+
 			alert("请输入材质名称！")
+
 		}
 		else{
+
 			currentMat = currentMaterial; //赋值成功
 			console.log(currentMat);
-			branchLib.flag = true;
-			//save之后重新开始编辑参数
+			branchLib.flag = true;// add mat 会检测
+
 			//必须初始化currentMat  不然在元mat上只修改name之后会put相同mat到同一branch
 			currentObject.material = new THREE.MeshStandardMaterial();
 			currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
 			refreshUI();
 
-			var newMatRow = new UI.Row();
+			//leftbar下面缓冲区只允许缓冲一个mat
+			if(leftbar.dom.lastChild.className == "bufferMat" ){
+				leftbar.dom.removeChild(leftbar.dom.lastChild);
+			}
+
+			var newMatRow = new UI.Row().setClass('bufferMat');
     		newMatRow.add( new UI.Button( currentMat.name ).setTop("20px").setMarginLeft( '10px' ).setWidth( "280px" ).setBackgroundColor("#808983"));
     		leftbar.add(newMatRow);
+
 		}
 		
-
 	} );
 
-	var materialQuit = new UI.Button( 'QUIT' ).setMarginLeft( '7px' ).onClick( function () {
+	var materialQuit = new UI.Button( 'RESET' ).setMarginLeft( '7px' ).onClick( function () {
 
 		initCurrentMat();
 		refreshUI();
@@ -450,8 +483,8 @@ MatBar.Paras = function(editor){
 		matbar.setDisplay('none');//关闭编辑窗口
 		viewport.setLeft('300px');
 		
-
 	} );
+
 	materialSave.add(materialSaveButton);
 	materialSave.add(materialQuit);
 	materialSave.add(materialExit);
@@ -466,6 +499,7 @@ MatBar.Paras = function(editor){
 		currentMaterial = currentObject.material;//初始化，放弃之前编辑的参数
 		currentMat = new THREE.MeshStandardMaterial();
 	}
+	
 	function updateMat(){
 
 		var textureWarning = false;

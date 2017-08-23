@@ -335,6 +335,7 @@ function dragMatFun(){
 
 				console.log( '确定object' );
 				console.log( xintersects[0].object );
+				//可 ctrl+z 多次撤销操作
 				editor.execute( new SetMaterialCommand( xintersects[0].object, dragMat ), 'Pasted Material: ' + dragMat.type );
 				render();
 				dragMat = null;

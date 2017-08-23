@@ -14,6 +14,12 @@ Sidebar.Scene = function ( editor ) {
 
 	function buildOption( object, draggable ) {
 
+		/*
+		<div draggable="false" class="option">
+		<span class="type PerspectiveCamera"></span>
+		 Camera
+		 </div>
+		 */
 		var option = document.createElement( 'div' );
 		option.draggable = draggable;
 		option.innerHTML = buildHTML( object );
@@ -25,7 +31,7 @@ Sidebar.Scene = function ( editor ) {
 
 	function getMaterialName( material ) {
 
-		if ( Array.isArray( material ) ) {
+		if ( Array.isArray( material ) ) {//Array.isArray()判断某个值是否为数组，返回布尔类型
 
 			var array = [];
 
@@ -44,6 +50,19 @@ Sidebar.Scene = function ( editor ) {
 	}
 
 	function buildHTML( object ) {
+		/*
+		举例：
+		#outliner .Mesh { color: #8888ee;}
+		<span class="type Mesh">
+		::after
+		</span>
+		"Box1"
+
+		<span class="type MeshStandardMaterial">
+		::after
+		</span>
+		"matName"
+		 */
 
 		var html = '<span class="type ' + object.type + '"></span> ' + object.name;
 
@@ -77,13 +96,14 @@ Sidebar.Scene = function ( editor ) {
 
 	var ignoreObjectSelectedSignal = false;
 
+
 	var outliner = new UI.Outliner( editor );
 	outliner.setId( 'outliner' );
 	outliner.onChange( function () {
 
 		ignoreObjectSelectedSignal = true;
 
-		editor.selectById( parseInt( outliner.getValue() ) );
+		editor.selectById( parseInt( outliner.getValue() ) );//outliner.getValue()返回当前选中物体的id
 
 		ignoreObjectSelectedSignal = false;
 
@@ -99,7 +119,7 @@ Sidebar.Scene = function ( editor ) {
 	// background
 
 	function onBackgroundChanged() {
-
+		// 在 viewport.js 的572行田间listener
 		signals.sceneBackgroundChanged.dispatch( backgroundColor.getHexValue() );
 
 	}

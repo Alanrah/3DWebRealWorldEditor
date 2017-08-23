@@ -51,6 +51,8 @@ select {
 	right: 300px;
 	left: 300px;
 	bottom: 32px;
+	background-image: url(../image/bg.jpg);
+    background-size:100% 100%;
 }
 
 	#viewport #info {
@@ -337,7 +339,7 @@ li {
 }
 #paras{
 	width: 280px;
-	top: 300px;
+	/*top: 300px;*/top:0px;
 	bottom: 0px;
 	position: absolute;
 	overflow: auto;
