@@ -32,7 +32,7 @@ var Leftbar = function ( editor ) {
     var container = new UI.Panel();
     container.setId( 'leftbar' );
 
-    var materialTab = new UI.Text( '    Material Library   ' );
+    var materialTab = new UI.Text( '         MATERIAL LIBRARY   ' );
     materialTab.setWidth( "272px" ).setColor( "#444" ).setBorderRight( "1px solid #222" ).setPadding( "12px" );
     container.add( materialTab );
 
@@ -339,6 +339,9 @@ var Leftbar = function ( editor ) {
 
         var edit = new UI.Button( 'edit' ).setWidth( "50px" ).onClick(function(){ 
 
+            matbar.setDisplay('block');//关闭编辑窗口
+            matBarParas.setDisplay('block');
+
             editMaterial(li.dom,name.dom.textContent); 
             
         });
@@ -395,14 +398,6 @@ var Leftbar = function ( editor ) {
         else{alert("editMatLib 中该branch不存在");}
 
        } 
-
-    function matBar(){
-
-        viewport.setLeft('601px');
-        matbar.setDisplay('block');
-
-    }
-
 
 
         //要将lli分支下的materialname拖动到elementFromPoint(e.clientX,e.clientY)
@@ -466,7 +461,8 @@ var Leftbar = function ( editor ) {
 
     var addMatRow = new UI.Row();
     addMatRow.add( new UI.Button( 'New Mat +' ).setTop("3px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
-        matBar();
+        matbar.setDisplay('block');
+        matBarParas.setDisplay('block');
     }));
     container.add(addMatRow);
  /*
