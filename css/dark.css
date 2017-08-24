@@ -336,7 +336,7 @@ li {
 	display:none;
 	width: 300px;
 	/*top: 300px;*/top:32px;
-	bottom: 32px;/*不设置bottom，滚动条不滚*/
+	/*bottom: 32px;不设置bottom，滚动条不滚*/
 	left: 301px;
 	position: absolute;
 	overflow: auto;

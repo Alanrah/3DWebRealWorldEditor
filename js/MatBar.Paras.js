@@ -11,7 +11,7 @@ MatBar.Paras = function(editor){
 
 	// 
 	var materialTab = new UI.Text( '           MATERIAL EDIT   ' );
-    materialTab.setWidth( "272px" ).setColor( "#444" ).setBorderRight( "1px solid #222" ).setPadding( "12px" );
+    materialTab.setWidth( "272px" ).setColor( "#444" ).setBorderRight( "1px solid #222" ).setPadding( "5px" );
     container.add( materialTab );
 
 	// type
