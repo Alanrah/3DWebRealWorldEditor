@@ -234,9 +234,13 @@ var Leftbar = function ( editor ) {
             var confirm = matNameInput(i,currentMat.name);
 
             if(confirm == true){
-
-                addMatLib(li,currentMat);
-                addMatLi(li,currentMat.name);
+            
+                var x = currentMat.toJSON();
+                //console.log(x)
+                var y = parseMaterial(x);
+                //console.log(y)
+                addMatLib(li,y);
+                addMatLi(li,y.name);
 
                 currentMat = new THREE.MeshStandardMaterial();
                 branchLib.flag = false;
@@ -251,11 +255,8 @@ var Leftbar = function ( editor ) {
         
         if(i>=0){
 
-            var j = branchLib.branchArray[i].ownMat.length;
-            console.log(branchLib.branchArray[i].name);
-            var temp = currentM;
-            branchLib.branchArray[i].addMaterial(temp);    
-            branchLib.changed = true
+            branchLib.branchArray[i].addMaterial(currentM);    
+            branchLib.changed = true;
             
             saveChange();
         }
@@ -374,19 +375,18 @@ var Leftbar = function ( editor ) {
     function editMaterial(li,materialName){//li 指的是当前材质所在行
 
         var i = findBranch(li.parentNode.parentNode.firstChild.firstChild.textContent);
-        editMat.editMatFlag = true;
+        
 
         if(i>=0){
 
             var j = findMat( branchLib.branchArray[i].ownMat , materialName);
 
             if(j>=0){
-
+                editMat.editMatFlag = true;
                 currentMat = branchLib.branchArray[i].ownMat[j];
                 editMat.li = li;
                 editMat.branchIndex = i;
                 editMat.ownMatIndex = j;
-                matBar();
                 mySignals.matbarFreshUI.dispatch();
 
             }
@@ -469,7 +469,7 @@ var Leftbar = function ( editor ) {
         matBar();
     }));
     container.add(addMatRow);
- 
+ /*
     var saveMatRow = new UI.Row();
     saveMatRow.add( new UI.Button( 'Save To Your MatLib' ).setTop("7px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
         
@@ -502,6 +502,6 @@ var Leftbar = function ( editor ) {
     }));
 
     container.add(saveMatRow);
-
+*/
     return container;
 } 

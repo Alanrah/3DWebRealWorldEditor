@@ -3,7 +3,7 @@ MatBar.Paras = function(editor){
 	var container = new UI.Panel();//DIV
 	container.setId('paras');
 	
-	var currentObject = new THREE.Mesh(new THREE.BoxBufferGeometry(4,4,4),currentMat);//新建时为标准，修改时为修改前的材质
+	var currentObject = new THREE.Mesh(new THREE.BoxBufferGeometry(4,4,4),new THREE.MeshStandardMaterial());//新建时为标准，修改时为修改前的材质
 	var currentMaterial = currentObject.material;//初始化,后续currentMaterial变化时不需要改变currentObject
 	var currentGeometry = currentObject.geometry;
 
@@ -471,7 +471,7 @@ MatBar.Paras = function(editor){
 	} );
 
 	var materialQuit = new UI.Button( 'RESET' ).setMarginLeft( '7px' ).onClick( function () {
-
+		editMat.editMatFlag = false;
 		initCurrentMat();
 		refreshUI();
 

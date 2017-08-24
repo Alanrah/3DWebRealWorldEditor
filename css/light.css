@@ -51,8 +51,8 @@ select {
 	right: 300px;
 	left: 300px;
 	bottom: 32px;
-	background-image: url(../image/bg.jpg);
-    background-size:100% 100%;
+	/*background-image: url(../image/bg.jpg);
+    background-size:100% 100%;*/
 }
 
 	#viewport #info {

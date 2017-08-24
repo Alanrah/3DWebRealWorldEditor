@@ -52,10 +52,10 @@ select {
 	position: absolute;
 	top: 32px;
 	right: 300px;
-	left: 300px;
+	left: 601px;
 	bottom: 32px;
-	background-image: url(../image/bg.jpg);
-    background-size:100% 100%;
+	/*background-image: url(../image/bg.jpg);
+    background-size:100% 100%;*/
 }
 
 	#viewport #info {
@@ -314,7 +314,7 @@ li {
 	border-left:solid 1px #222;
 	background-color: #111;
 	float: left;
-	display: none;
+	display: block;
 	z-index: -1;
 	color: #888;
 }

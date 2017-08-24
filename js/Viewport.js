@@ -335,8 +335,12 @@ function dragMatFun(){
 
 				console.log( '确定object' );
 				console.log( xintersects[0].object );
+				var x = dragMat.toJSON();
+                //console.log(x)
+                var y = parseMaterial(x);
 				//可 ctrl+z 多次撤销操作
-				editor.execute( new SetMaterialCommand( xintersects[0].object, dragMat ), 'Pasted Material: ' + dragMat.type );
+				y.uuid = xintersects[0].object.material.uuid;
+				editor.execute( new SetMaterialCommand( xintersects[0].object, y ), 'Pasted Material: ' + y.type );
 				render();
 				dragMat = null;
 				dragMatFlag = false;

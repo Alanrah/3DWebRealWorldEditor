@@ -210,8 +210,17 @@
 			document.body.appendChild( modal.dom );
 
 			//console.log(modal.dom);
+			
+			//解析material from json to material
+			function parseMaterial ( json ) {
 
-			//
+	            var loader = new THREE.ObjectLoader();
+	            var images = loader.parseImages( json.images );
+	            var textures  = loader.parseTextures( json.textures, images );
+	            var materials = loader.parseMaterials( [ json ], textures );
+	            return materials[ json.uuid ];
+
+        }
 
 			editor.setTheme( editor.config.getKey( 'theme' ) );
 
