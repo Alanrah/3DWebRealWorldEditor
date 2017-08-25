@@ -126,12 +126,28 @@ Sidebar.Scene = function ( editor ) {
 
 	var backgroundRow = new UI.Row();
 
-	var backgroundColor = new UI.Color().setValue( '#aaaaaa' ).onChange( onBackgroundChanged );
+	var backgroundColor = new UI.Color().setValue( '#FFF' ).onChange( onBackgroundChanged );
 
-	backgroundRow.add( new UI.Text( 'Background' ).setWidth( '90px' ) );
+	backgroundRow.add( new UI.Text( 'BackgroundColor' ).setWidth( '120px' ) );
 	backgroundRow.add( backgroundColor );
 
 	container.add( backgroundRow );
+
+	//backgroundImage
+	
+	function onBackgroundImageChanged() {
+		
+		signals.sceneBackgroundImageChanged.dispatch( backgroundImage.getValue() );
+	}
+
+	var backgroundImageRow = new UI.Row();
+
+	var backgroundImage = new UI.Texture().onChange( onBackgroundImageChanged );
+
+	backgroundImageRow.add( new UI.Text( 'BackgroundImage' ).setWidth( '120px' ) );
+	backgroundImageRow.add( backgroundImage );
+
+	container.add( backgroundImageRow );
 
 	// fog
 
