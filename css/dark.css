@@ -335,7 +335,7 @@ li {
 #paras{
 	display:none;
 	width: 300px;
-	/*top: 300px;*/top:32px;
+	/*top: 300px;*/top:50px;
 	/*bottom: 32px;不设置bottom，滚动条不滚*/
 	height: 80%;
 	left: 301px;

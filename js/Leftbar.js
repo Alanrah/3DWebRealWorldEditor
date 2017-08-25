@@ -465,39 +465,86 @@ var Leftbar = function ( editor ) {
         matBarParas.setDisplay('block');
     }));
     container.add(addMatRow);
- /*
-    var saveMatRow = new UI.Row();
-    saveMatRow.add( new UI.Button( 'Save To Your MatLib' ).setTop("7px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
-        
-        materialdb.set(branchLib,function(e){
-            alert("materialDB put sucess");
-        });
-    }));
-    container.add(saveMatRow);
-
-    var saveMatRow = new UI.Row();
-
-    saveMatRow.add( new UI.Button( 'Get Your MatLib' ).setTop("10px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
-        //读取的结果一直是 undefined
-        materialdb.get(function(e){
-            console.log(e);
-
-            branchLib = e;//两类型不匹配，不能直接赋值
-            console.log(branchLib)
-
+ 
+    function initBranchLi(branchLib){
             for(var i in branchLib.branchArray){
 
-            var li = addBranchLi(branchLib.branchArray[i].name);
+                var li = addBranchLi(branchLib.branchArray[i].name);//是li.dom
+                
+                for(var j in branchLib.branchArray[i].ownMat){
 
-            for(var j in branchLib.branchArray[i].ownMat){
-                addMatLi(li,branchLib.branchArray[i].ownMat[j].name);
+                    addMatLi(li,branchLib.branchArray[i].ownMat[j].name)
+                    
+                }
             }
         }
 
+    var saveMatRow = new UI.Row();
+    saveMatRow.add( new UI.Button( 'Save To Your MatLib' ).setTop("7px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
+        
+        function toJSON(branchlib){
+
+        var materianDBObject = new Object() ;
+        materianDBObject.changed = branchlib.changed;
+        materianDBObject.flag = branchlib.flag;
+        materianDBObject.branchArray = new Array();
+
+        for( var i in branchlib.branchArray){
+
+        var branch = new Branch(branchlib.branchArray[i].name);
+        materianDBObject.branchArray.push(branch);
+
+        for( var j in branchlib.branchArray[i].ownMat){
+            
+            materianDBObject.branchArray[i].ownMat[j] = branchlib.branchArray[i].ownMat[j].toJSON();
+            }
+        }
+
+        return materianDBObject;
+
+        }
+
+        var branchLibObject = toJSON(branchLib);
+
+        materialdb.set(branchLibObject);
+    }));
+    container.add(saveMatRow);
+
+
+
+    var getMatRow = new UI.Row();
+    getMatRow.add( new UI.Button( 'Get Your MatLib' ).setTop("10px").setMarginLeft( '10px' ).setWidth( "280px" ).onClick( function (){
+        //读取的结果一直是 undefined
+        materialdb.get(function(e){
+
+        function fromJSON(materianDBObject){
+
+        var branchlib = new BranchLib();
+
+        branchlib.changed = materianDBObject.changed;
+        branchlib.flag = materianDBObject.flag;
+
+        for(var i in materianDBObject.branchArray){
+
+            var branch = new Branch(materianDBObject.branchArray[i].name);
+            branchlib.branchArray.push(branch);
+            
+            for(var j in materianDBObject.branchArray[i].ownMat){
+
+                branchlib.branchArray[i].ownMat[j] = parseMaterial(materianDBObject.branchArray[i].ownMat[j]);
+            }
+        }
+
+        return branchlib;
+        }
+            console.log(fromJSON(e));
+            branchLib = fromJSON(e);
+            branchUL.dom.innerHTML = "";//重置材质库界面
+            initBranchLi(branchLib);
         });
     }));
 
-    container.add(saveMatRow);
-*/
+    container.add(getMatRow);
+
     return container;
 } 

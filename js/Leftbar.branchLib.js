@@ -1,5 +1,3 @@
-//用户分支中的material信息,ThreeJS的
-
 //用户的分支信息
 var Branch = function(name){
 
@@ -29,12 +27,19 @@ var BranchLib = function(){
 	this.changed = false;
 	this.flag = false;//监视是否有新的mat
 }
+
 BranchLib.prototype = {
+
 	addBranch:function(branch){
+
 		this.branchArray.push(branch);
+
 		},
-	//该函数等待debug
+
 	delBranch: function(branchidx){//删除了位于index branch的这个branch元素
+
 		this.branchArray.splice(branchidx,1);
-	}
+	},
+
+	
 }
