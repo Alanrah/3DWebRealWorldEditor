@@ -431,6 +431,8 @@ function dragMatFun(){
 		renderer = newRenderer;
 
 		renderer.autoClear = false;
+		renderer.setClearAlpha(0);
+		renderer.setClearColor(0xFFFFFF, 0.0);
 		renderer.autoUpdateScene = false;
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
@@ -576,6 +578,28 @@ function dragMatFun(){
 	signals.sceneBackgroundChanged.add( function ( backgroundColor ) {
 
 		scene.background.setHex( backgroundColor );
+
+		render();
+
+	} );
+
+	signals.sceneBackgroundImageChanged.add( function ( backgroundImage ) {
+
+		//document.getElementById("viewport").style.backgroundImage = 'url(\'image\/SkyBox\/g.jpg\')';
+		scene.background = null;
+		document.getElementById("viewport").style.backgroundImage = "url("+backgroundImage.image.currentSrc+")";
+		document.getElementById("viewport").style.backgroundSize = '100% 100%';
+		
+		render();
+
+	} );
+
+	signals.sceneSkyBoxImageChanged.add( function ( urls ) {
+
+		var textureCube = new THREE.CubeTextureLoader().load( urls );
+        textureCube.format = THREE.RGBFormat;
+
+		scene.background = textureCube;
 
 		render();
 

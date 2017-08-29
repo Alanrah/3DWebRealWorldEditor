@@ -119,7 +119,7 @@ Sidebar.Scene = function ( editor ) {
 	// background
 
 	function onBackgroundChanged() {
-		// 在 viewport.js 的572行田间listener
+
 		signals.sceneBackgroundChanged.dispatch( backgroundColor.getHexValue() );
 
 	}
@@ -149,6 +149,54 @@ Sidebar.Scene = function ( editor ) {
 
 	container.add( backgroundImageRow );
 
+/*
+	//sKyBoxImage
+	
+	function onSkyBoxImageChanged() {
+
+
+		if(skyBoxImageEnabled.getValue()==true && skyBoxImagePX.imageload!=null && skyBoxImageNX.imageload!=null && skyBoxImagePY.imageload!=null && skyBoxImageNY.imageload!=null && skyBoxImagePZ.imageload!=null && skyBoxImageNZ.imageload!=null){
+			var path = "image/SkyBox/";
+			var urls = [
+				path + skyBoxImagePX.imageload.sourceFile , path + skyBoxImageNX.imageload.sourceFile,
+				path + skyBoxImagePY.imageload.sourceFile , path + skyBoxImageNY.imageload.sourceFile,
+				path + skyBoxImagePZ.imageload.sourceFile , path + skyBoxImageNZ.imageload.sourceFile
+			];
+			signals.sceneSkyBoxImageChanged.dispatch( urls );
+		}
+		else{
+			skyBoxImageEnabled.setValue(false);
+			onBackgroundChanged();
+		}
+		
+	}
+
+	var skyBoxImageRow = new UI.Row();
+
+	skyBoxImageRow.add( new UI.Text( 'SkyBoxImage:天空盒背景' ).setWidth( '170px' ) );
+	skyBoxImageEnabled = new UI.Checkbox( false ).setWidth( '15px' ).onChange(onSkyBoxImageChanged)
+	skyBoxImageRow.add( skyBoxImageEnabled );
+
+	var imageRow = new UI.Row();
+
+	var skyBoxImagePX = new UI.ImageLoad();
+	var skyBoxImageNX = new UI.ImageLoad();
+	var skyBoxImagePY = new UI.ImageLoad();
+	var skyBoxImageNY = new UI.ImageLoad();
+	var skyBoxImagePZ = new UI.ImageLoad();
+	var skyBoxImageNZ = new UI.ImageLoad();
+
+	imageRow.add(skyBoxImagePX);
+	imageRow.add(skyBoxImageNX);
+	imageRow.add(skyBoxImagePY);
+	imageRow.add(skyBoxImageNY);
+	imageRow.add(skyBoxImagePZ);
+	imageRow.add(skyBoxImageNZ);
+
+	skyBoxImageRow.add( imageRow );
+	container.add( skyBoxImageRow );
+
+*/
 	// fog
 
 	function onFogChanged() {
@@ -247,7 +295,7 @@ Sidebar.Scene = function ( editor ) {
 
 		if ( scene.background ) {
 
-			backgroundColor.setHexValue( scene.background.getHex() );
+			backgroundColor.setHexValue( scene.background.getHex() );	
 
 		}
 

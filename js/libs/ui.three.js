@@ -120,7 +120,7 @@ UI.Texture.prototype.getValue = function () {
 
 UI.Texture.prototype.setValue = function ( texture ) {
 
-	var canvas = this.dom.children[ 0 ];
+	var canvas = this.dom.children[ 0 ];// this.dom 是span,this.dom.children[ 0 ] 是canvas，this.dom.children[ 1 ]是name input
 	var name = this.dom.children[ 1 ];
 	var context = canvas.getContext( '2d' );
 
@@ -463,5 +463,161 @@ UI.THREE.Boolean.prototype.getValue = function () {
 UI.THREE.Boolean.prototype.setValue = function ( value ) {
 
 	return this.checkbox.setValue( value );
+
+};
+
+
+UI.ImageLoad = function ( mapping ) {
+
+	UI.Element.call( this );
+
+	var scope = this;
+
+	var dom = document.createElement( 'span' );
+
+	var form = document.createElement( 'form' );
+
+	var input = document.createElement( 'input' );
+	input.type = 'file';
+	input.addEventListener( 'change', function ( event ) {
+
+		loadFile( event.target.files[ 0 ] );
+
+	} );
+	form.appendChild( input );
+
+	var canvas = document.createElement( 'canvas' );
+	canvas.width = 32;
+	canvas.height = 16;
+	canvas.style.cursor = 'pointer';
+	canvas.style.marginRight = '5px';
+	canvas.style.border = '1px solid #888';
+	canvas.addEventListener( 'click', function ( event ) {
+
+		input.click();
+
+	}, false );
+	canvas.addEventListener( 'drop', function ( event ) {
+
+		event.preventDefault();
+		event.stopPropagation();
+		loadFile( event.dataTransfer.files[ 0 ] );
+
+	}, false );
+	dom.appendChild( canvas );
+
+	function loadFile( file ) {
+
+		if ( file.type.match( 'image.*' ) ) {
+
+			var reader = new FileReader();
+
+			if ( file.type === 'image/targa' ) {
+
+				reader.addEventListener( 'load', function ( event ) {
+
+					var canvas = new THREE.TGALoader().parse( event.target.result );
+
+					var texture = new THREE.CanvasTexture( canvas, mapping );
+					texture.sourceFile = file.name;
+
+					scope.setValue( texture );
+
+					if ( scope.onChangeCallback ) scope.onChangeCallback();
+
+				}, false );
+
+				reader.readAsArrayBuffer( file );
+
+			} else {
+
+				reader.addEventListener( 'load', function ( event ) {
+
+					var image = document.createElement( 'img' );
+					image.addEventListener( 'load', function( event ) {
+
+						var texture = new THREE.Texture( this, mapping );
+						texture.sourceFile = file.name;
+						texture.needsUpdate = true;
+
+						scope.setValue( texture );
+
+						if ( scope.onChangeCallback ) scope.onChangeCallback();
+
+					}, false );
+
+					image.src = event.target.result;
+
+				}, false );
+
+				reader.readAsDataURL( file );
+
+			}
+
+		}
+
+		form.reset();
+
+	}
+
+	this.dom = dom;
+	this.imageload = null;
+	this.onChangeCallback = null;
+
+	return this;
+
+};
+
+UI.ImageLoad.prototype = Object.create( UI.Element.prototype );
+UI.ImageLoad.prototype.constructor = UI.ImageLoad;
+
+UI.ImageLoad.prototype.getValue = function () {
+
+	return this.imageload;
+
+};
+
+UI.ImageLoad.prototype.setValue = function ( imageload ) {
+
+	var canvas = this.dom.children[ 0 ];
+	var context = canvas.getContext( '2d' );
+
+	if ( imageload !== null ) {
+
+		var image = imageload.image;
+
+		if ( image !== undefined && image.width > 0 ) {
+
+			var scale = canvas.width / image.width;
+			context.drawImage( image, 0, 0, image.width * scale, image.height * scale );
+
+		} else {
+
+			context.clearRect( 0, 0, canvas.width, canvas.height );
+
+		}
+
+	} else {
+
+
+		if ( context !== null ) {
+
+			// Seems like context can be null if the canvas is not visible
+
+			context.clearRect( 0, 0, canvas.width, canvas.height );
+
+		}
+
+	}
+
+	this.imageload = imageload;
+
+};
+
+UI.ImageLoad.prototype.onChange = function ( callback ) {
+
+	this.onChangeCallback = callback;
+
+	return this;
 
 };

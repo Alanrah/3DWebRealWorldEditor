@@ -49,6 +49,7 @@ var Editor = function () {
 
 		sceneBackgroundChanged: new Signal(),
 		sceneBackgroundImageChanged: new Signal(),
+		sceneSkyBoxImageChanged: new Signal(),
 		sceneFogChanged: new Signal(),
 		sceneGraphChanged: new Signal(),
 
