@@ -140,7 +140,7 @@ Sidebar.Project = function ( editor ) {
 		if ( shadows && renderer.shadowMap ) {
 
 			renderer.shadowMap.enabled = true;
-			// renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 		}
 

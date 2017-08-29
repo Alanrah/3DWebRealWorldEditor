@@ -577,6 +577,8 @@ function dragMatFun(){
 
 	signals.sceneBackgroundChanged.add( function ( backgroundColor ) {
 
+		scene.background = new THREE.Color();
+
 		scene.background.setHex( backgroundColor );
 
 		render();

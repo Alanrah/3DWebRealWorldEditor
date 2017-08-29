@@ -20,7 +20,6 @@ Menubar.Add = function ( editor ) {
 	//
 
 	var meshCount = 0;
-	var lightCount = 0;
 	var cameraCount = 0;
 
 	editor.signals.editorCleared.add( function () {
@@ -294,111 +293,7 @@ Menubar.Add = function ( editor ) {
 
 	options.add( new UI.HorizontalRule() );
 
-	// PointLight
 
-	var option = new UI.Row();
-	option.setClass( 'option' );
-	option.setTextContent( 'PointLight' );
-	option.onClick( function () {
-
-		var color = 0xffffff;
-		var intensity = 1;
-		var distance = 0;
-
-		var light = new THREE.PointLight( color, intensity, distance );
-		light.name = 'PointLight ' + ( ++ lightCount );
-
-		editor.execute( new AddObjectCommand( light ) );
-
-	} );
-	options.add( option );
-
-	// SpotLight
-
-	var option = new UI.Row();
-	option.setClass( 'option' );
-	option.setTextContent( 'SpotLight' );
-	option.onClick( function () {
-
-		var color = 0xffffff;
-		var intensity = 1;
-		var distance = 0;
-		var angle = Math.PI * 0.1;
-		var penumbra = 0;
-
-		var light = new THREE.SpotLight( color, intensity, distance, angle, penumbra );
-		light.name = 'SpotLight ' + ( ++ lightCount );
-		light.target.name = 'SpotLight ' + ( lightCount ) + ' Target';
-
-		light.position.set( 5, 10, 7.5 );
-
-		editor.execute( new AddObjectCommand( light ) );
-
-	} );
-	options.add( option );
-
-	// DirectionalLight
-
-	var option = new UI.Row();
-	option.setClass( 'option' );
-	option.setTextContent( 'DirectionalLight' );
-	option.onClick( function () {
-
-		var color = 0xffffff;
-		var intensity = 1;
-
-		var light = new THREE.DirectionalLight( color, intensity );
-		light.name = 'DirectionalLight ' + ( ++ lightCount );
-		light.target.name = 'DirectionalLight ' + ( lightCount ) + ' Target';
-
-		light.position.set( 5, 10, 7.5 );
-
-		editor.execute( new AddObjectCommand( light ) );
-
-	} );
-	options.add( option );
-
-	// HemisphereLight
-
-	var option = new UI.Row();
-	option.setClass( 'option' );
-	option.setTextContent( 'HemisphereLight' );
-	option.onClick( function () {
-
-		var skyColor = 0x00aaff;
-		var groundColor = 0xffaa00;
-		var intensity = 1;
-
-		var light = new THREE.HemisphereLight( skyColor, groundColor, intensity );
-		light.name = 'HemisphereLight ' + ( ++ lightCount );
-
-		light.position.set( 0, 10, 0 );
-
-		editor.execute( new AddObjectCommand( light ) );
-
-	} );
-	options.add( option );
-
-	// AmbientLight
-
-	var option = new UI.Row();
-	option.setClass( 'option' );
-	option.setTextContent( 'AmbientLight' );
-	option.onClick( function() {
-
-		var color = 0x222222;
-
-		var light = new THREE.AmbientLight( color );
-		light.name = 'AmbientLight ' + ( ++ lightCount );
-
-		editor.execute( new AddObjectCommand( light ) );
-
-	} );
-	options.add( option );
-
-	//
-
-	options.add( new UI.HorizontalRule() );
 
 	// PerspectiveCamera
 

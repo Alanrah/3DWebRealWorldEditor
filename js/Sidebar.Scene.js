@@ -126,7 +126,7 @@ Sidebar.Scene = function ( editor ) {
 
 	var backgroundRow = new UI.Row();
 
-	var backgroundColor = new UI.Color().setValue( '#FFF' ).onChange( onBackgroundChanged );
+	var backgroundColor = new UI.Color().setValue( '#aaaaaa' ).onChange( onBackgroundChanged );
 
 	backgroundRow.add( new UI.Text( 'BackgroundColor' ).setWidth( '120px' ) );
 	backgroundRow.add( backgroundColor );
@@ -295,7 +295,7 @@ Sidebar.Scene = function ( editor ) {
 
 		if ( scene.background ) {
 
-			backgroundColor.setHexValue( scene.background.getHex() );	
+			backgroundColor.setHexValue( scene.background.getHex() );
 
 		}
 
