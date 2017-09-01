@@ -20,6 +20,123 @@ var Viewport = function ( editor ) {
 	var scene = editor.scene;
 	var sceneHelpers = editor.sceneHelpers;
 
+	// SSAO  相关
+	var depthMaterial, depthRenderTarget;
+	var effectComposer = null;
+
+	// SAO 相关 
+
+	function initSSAOPostprocessing() {
+
+		var ssaoPass;
+
+		// Setup render pass
+		var renderPass = new THREE.RenderPass( scene, camera );
+
+		// Setup depth pass
+		depthMaterial = new THREE.MeshDepthMaterial();
+		depthMaterial.depthPacking = THREE.RGBADepthPacking;
+		depthMaterial.blending = THREE.NoBlending;
+
+		var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
+		depthRenderTarget = new THREE.WebGLRenderTarget( container.dom.offsetWidth, container.dom.offsetHeight, pars );
+		depthRenderTarget.texture.name = "SSAOShader.rt";
+		//console.log(depthRenderTarget.texture)
+
+		// Setup SSAO pass
+		ssaoPass = new THREE.ShaderPass( THREE.SSAOShader );
+		ssaoPass.renderToScreen = true;
+		//ssaoPass.uniforms[ "tDiffuse" ].value will be set by ShaderPass
+		ssaoPass.uniforms[ "tDepth" ].value = depthRenderTarget.texture;
+		ssaoPass.uniforms[ 'size' ].value.set( container.dom.offsetWidth, container.dom.offsetHeight );
+		ssaoPass.uniforms[ 'cameraNear' ].value = camera.near;
+		ssaoPass.uniforms[ 'cameraFar' ].value = camera.far;
+		ssaoPass.uniforms[ 'onlyAO' ].value = false;
+		ssaoPass.uniforms[ 'aoClamp' ].value = 0.3;
+		ssaoPass.uniforms[ 'lumInfluence' ].value = 0.5;
+
+		// Add pass to effect composer
+		
+		effectComposer = new THREE.EffectComposer( renderer );
+		effectComposer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
+		effectComposer.addPass( renderPass );
+		effectComposer.addPass( ssaoPass );
+
+		}
+
+	function initSAOPostprocessing(){
+
+		var renderPass, saoPass;
+		var supportsDepthTextureExtension = false;
+		var isWebGL2 = false;
+		var params = {
+				output: 0,
+				saoBias: 0.5,
+				saoIntensity: 0.25,
+				saoScale: 1,
+				saoKernelRadius: 100,
+				saoMinResolution: 0,
+				saoBlur: true,
+				saoBlurRadius: 12,
+				saoBlurStdDev: 6,
+				saoBlurDepthCutoff: 0.01
+			}
+
+		effectComposer = new THREE.EffectComposer( renderer );
+		effectComposer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
+		var renderPass = new THREE.RenderPass( scene, camera );
+		effectComposer.addPass( renderPass );
+		saoPass = new THREE.SAOPass(scene, camera, false, true);
+		saoPass.renderToScreen = true;
+		effectComposer.addPass( saoPass );
+
+	}
+
+	function initSMAAPostprocessing(){
+
+		effectComposer = new THREE.EffectComposer( renderer );
+		effectComposer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
+		effectComposer.addPass( new THREE.RenderPass( scene, camera ) );
+
+		pass = new THREE.SMAAPass( container.dom.offsetWidth, container.dom.offsetHeight  );
+		pass.renderToScreen = true;
+		effectComposer.addPass( pass );
+
+	}
+
+	function initBLOOMPostprocessing( ){
+
+		var effectFXAA, bloomPass, renderPass;
+		var params = {
+				projection: 'normal',
+				background: false,
+				exposure: 1.0,
+				bloomStrength: 1.5,
+				bloomThreshold: 0.85,
+				bloomRadius: 0.4
+			};
+
+		renderer.toneMapping = THREE.LinearToneMapping;
+		renderer.shadowMap.enabled = true;
+		renderer.gammaInput = true;
+		renderer.gammaOutput = true;
+
+		var copyShader = new THREE.ShaderPass(THREE.CopyShader);
+		copyShader.renderToScreen = true;
+
+		bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(container.dom.offsetWidth, container.dom.offsetHeight), 1.5, 0.4, 0.85);//1.0, 9, 0.5, 512);
+		renderPass = new THREE.RenderPass(scene, camera);
+		effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
+		effectFXAA.uniforms['resolution'].value.set(1 / container.dom.offsetWidth, 1 / container.dom.offsetHeight  );
+		effectComposer = new THREE.EffectComposer(renderer);
+		effectComposer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
+		effectComposer.addPass(renderPass);
+		effectComposer.addPass(effectFXAA);
+		effectComposer.addPass(bloomPass);
+		effectComposer.addPass(copyShader);
+
+	}
+
 	var objects = [];
 
 	//
@@ -281,40 +398,7 @@ var Viewport = function ( editor ) {
 		}
 
 	}
-/*
-	var x = setInterval( function () {
 
-		console.log(dragMatFlag)
-
-		if( dragMatFlag == true ){
-
-			var xonUpPosition = new THREE.Vector2();
-			var xarray = getMousePosition( container.dom, dragMatPoint.x, dragMatPoint.y );
-			xonUpPosition.fromArray( xarray );
-
-			console.log( '进入interval' )
-
-			var xraycaster = new THREE.Raycaster();
-
-			var xmouse = new THREE.Vector2();
-			xmouse.set( ( xonUpPosition.x * 2 ) - 1, - ( xonUpPosition.y * 2 ) + 1 );
-
-			xraycaster.setFromCamera( xmouse, camera );
-
-			var xintersects = xraycaster.intersectObjects( scene.children );
-
-			if ( xintersects.length > 0 ) {
-
-				console.log( '确定object' );
-				console.log( xintersects[0].object );
-				editor.execute( new SetMaterialCommand( xintersects[0].object, dragMat ), 'Pasted Material: ' + dragMat.type );
-				render();
-			}
-		}
-		dragMatFlag = false;
-	}, 500);
-	*/
-//利用signals来监听变量变化，调度事件
 function dragMatFun(){
 	if( dragMatFlag == true ){
 
@@ -662,6 +746,12 @@ function dragMatFun(){
 
 		renderer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
 
+		if(effectComposer != null){
+
+			effectComposer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
+
+		}
+
 		render();
 
 	} );
@@ -672,6 +762,31 @@ function dragMatFun(){
 		render();
 
 	} );
+
+	signals.SSAO.add( function () {
+
+		render();
+
+	} );
+
+	signals.SAO.add( function () {
+
+		render();
+
+	} );
+
+	signals.BLOOM.add( function () {
+
+		render();
+
+	} );
+
+	signals.SMAA.add( function () {
+
+		render();
+
+	} );
+
 
 	//
 
@@ -715,6 +830,50 @@ function dragMatFun(){
 		sceneHelpers.updateMatrixWorld();
 		scene.updateMatrixWorld();
 
+		if( editor.SSAOpostprocessing == true){
+
+			initSSAOPostprocessing();
+			// Render depth into depthRenderTarget
+			scene.overrideMaterial = depthMaterial;//如果不为空，它将迫使在场景中的一切对象都使用该材料进行渲染。默认为空（null）。
+			renderer.render( scene, camera, depthRenderTarget, true );
+
+			// Render renderPass and SSAO shaderPass
+			scene.overrideMaterial = null;
+			effectComposer.render();
+			effectComposer.render( sceneHelpers, camera );
+
+			return;
+
+		}
+
+		if(editor.SAOpostprocessing == true){
+
+			initSAOPostprocessing();
+			effectComposer.render();
+			effectComposer.render( sceneHelpers, camera );
+
+			return;
+		}
+
+		if(editor.BLOOMpostprocessing == true){
+
+			initBLOOMPostprocessing();
+			effectComposer.render();
+			effectComposer.render( sceneHelpers, camera );
+
+			return;
+		}
+
+		if(editor.SMAApostprocessing == true){
+
+			initSMAAPostprocessing();
+			effectComposer.render();
+			effectComposer.render( sceneHelpers, camera );
+
+			return;
+		}
+
+
 		if ( vrEffect && vrEffect.isPresenting ) {
 
 			vrControls.update();
@@ -735,6 +894,7 @@ function dragMatFun(){
 			}
 
 		}
+
 
 
 	}

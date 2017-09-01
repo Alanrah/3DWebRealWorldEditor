@@ -77,7 +77,13 @@ var Editor = function () {
 
 		showGridChanged: new Signal(),
 		refreshSidebarObject3D: new Signal(),
-		historyChanged: new Signal()
+		historyChanged: new Signal(),
+
+		SSAO: new Signal(),
+		SAO: new Signal(),
+		HDR: new Signal(),
+		BLOOM: new Signal(),
+		SMAA: new Signal()
 
 	};
 
@@ -102,6 +108,12 @@ var Editor = function () {
 
 	this.selected = null;
 	this.helpers = {};
+
+	this.SSAOpostprocessing = false;
+	this.SAOpostprocessing = false;
+	this.HDRpostprocessing = false;
+	this.BLOOMpostprocessing = false;
+	this.SMAApostprocessing = false;
 
 };
 
