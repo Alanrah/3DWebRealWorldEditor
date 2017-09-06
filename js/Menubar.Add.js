@@ -70,7 +70,7 @@ Menubar.Add = function ( editor ) {
 
 	var option = new UI.Row();
 	option.setClass( 'option' );
-	option.setTextContent( 'MirrorPlane' );
+	option.setTextContent( 'Mirror' );
 	option.onClick( function () {
 
 		var groundMirror = new THREE.Mirror( 10, 10, {
@@ -170,7 +170,7 @@ Menubar.Add = function ( editor ) {
 				var mirrorMesh = new THREE.Mesh( planeGeo, groundMirrorMaterial );
 				mirrorMesh.add( groundMirror );
 
-				mirrorMesh.name = 'mirror ' + ( ++ meshCount );
+				mirrorMesh.name = 'BlurMirror ' + ( ++ meshCount );
 
 				mirrorMesh.rotateX( - Math.PI / 2 );
 

@@ -456,7 +456,6 @@ MatBar.Paras = function(editor){
 		else{
 
 			currentMat = currentMaterial; //赋值成功
-			console.log(currentMat);
 			branchLib.flag = true;// add mat 会检测
 
 			//必须初始化currentMat  不然在元mat上只修改name之后会put相同mat到同一branch

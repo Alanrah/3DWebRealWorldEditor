@@ -362,7 +362,8 @@ li {
 
 #diag{
 	display:none;
-	width: 310px;
+	width: 340px;
+	height: 130px;
 	/*top: 300px;*/top:100px;
 	/*bottom: 32px;不设置bottom，滚动条不滚*/
 	left: 330px;
