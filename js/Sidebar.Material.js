@@ -1031,7 +1031,7 @@ Sidebar.Material = function ( editor ) {
 
 		materialClass.setValue( material.type );
 
-		if ( material.color !== undefined ) {
+		if ( material.color !== undefined && material.color.getHexString  && typeof( material.color.getHexString )=="function") {
 
 			materialColor.setHexValue( material.color.getHexString() );
 
@@ -1049,13 +1049,13 @@ Sidebar.Material = function ( editor ) {
 
 		}
 
-		if ( material.emissive !== undefined ) {
+		if ( material.emissive !== undefined && material.emissive.getHexString  && typeof( material.emissive.getHexString )=="function" ) {
 
 			materialEmissive.setHexValue( material.emissive.getHexString() );
 
 		}
 
-		if ( material.specular !== undefined ) {
+		if ( material.specular !== undefined   && material.specular.getHexString  && typeof( material.specular.getHexString )=="function") {
 
 			materialSpecular.setHexValue( material.specular.getHexString() );
 

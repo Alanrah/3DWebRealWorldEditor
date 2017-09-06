@@ -645,6 +645,12 @@ function dragMatFun(){
 
 	} );
 
+	signals.RenderEverywhere.add( function (){
+
+		render();
+		
+	})
+
 	signals.helperRemoved.add( function ( object ) {
 
 		objects.splice( objects.indexOf( object.getObjectByName( 'picker' ) ), 1 );

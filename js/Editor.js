@@ -83,7 +83,10 @@ var Editor = function () {
 		SAO: new Signal(),
 		HDR: new Signal(),
 		BLOOM: new Signal(),
-		SMAA: new Signal()
+		SMAA: new Signal(),
+
+		NDTexture: new Signal(),
+		RenderEverywhere:  new Signal()
 
 	};
 

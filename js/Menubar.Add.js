@@ -66,6 +66,131 @@ Menubar.Add = function ( editor ) {
 	} );
 	options.add( option );
 
+	// MirrorPlane
+
+	var option = new UI.Row();
+	option.setClass( 'option' );
+	option.setTextContent( 'MirrorPlane' );
+	option.onClick( function () {
+
+		var groundMirror = new THREE.Mirror( 10, 10, {
+			clipBias: 0.003,
+			textureWidth: viewport.dom.offsetWidth * window.devicePixelRatio,
+			textureHeight: viewport.dom.offsetHeight * window.devicePixelRatio,
+			color: 0x777777
+		} );
+		groundMirror.rotateX( - Math.PI / 2 );
+		
+		groundMirror.name = 'Mirror ' + ( ++ meshCount );
+
+		editor.execute( new AddObjectCommand( groundMirror ) );
+
+	} );
+	options.add( option );
+	
+	// mirrorRTT + blur
+	
+	var option = new UI.Row();
+	option.setClass( 'option' );
+	option.setTextContent( 'BlurMirror' );
+
+	option.onClick( function () {
+
+		dialog.setDisplay('block');
+
+		var decalNormal //= new THREE.TextureLoader().load( 'image/decal/decal-normal.jpg' );
+
+		var decalDiffuse //= new THREE.TextureLoader().load( 'image/decal/decal-diffuse.png' );
+
+
+		editor.signals.NDTexture.add(function(url1,url2){
+
+			console.log(url1)
+
+			decalNormal = new THREE.TextureLoader().load( url1 );
+			decalDiffuse = new THREE.TextureLoader().load( url2 );
+
+			if(decalNormal && decalDiffuse) {
+
+				decalDiffuse.wrapS = decalDiffuse.wrapT = THREE.RepeatWrapping;
+
+				var WIDTH = viewport.dom.offsetWidth;
+				var HEIGHT = viewport.dom.offsetHeight;
+
+				var groundMirrorMaterial;
+
+				var planeGeo = new THREE.PlaneBufferGeometry( 10.1, 10.1 );
+
+				var groundMirror = new THREE.MirrorRTT( 10, 10, { clipBias: 0.003, textureWidth: WIDTH, textureHeight: HEIGHT } );
+
+				var mask = new THREE.SwitchNode( new THREE.TextureNode( decalDiffuse ), 'w' );
+				var maskFlip = new THREE.Math1Node( mask, THREE.Math1Node.INVERT );
+
+				var mirror = new THREE.MirrorNode( groundMirror );
+
+				var normal = new THREE.TextureNode( decalNormal );
+				var normalXY = new THREE.SwitchNode( normal, 'xy' );
+				var normalXYFlip = new THREE.Math1Node(
+					normalXY,
+					THREE.Math1Node.INVERT
+				);
+
+				var offsetNormal = new THREE.OperatorNode(
+					normalXYFlip,
+					new THREE.FloatNode( .5 ),
+					THREE.OperatorNode.SUB
+				);
+
+				mirror.offset = new THREE.OperatorNode(
+					offsetNormal, // normal
+					new THREE.FloatNode( 6 ),// scale
+					THREE.OperatorNode.MUL
+				);
+
+				var clr = new THREE.Math3Node(
+					mirror,
+					new THREE.ColorNode( 0xFFFFFF ),
+					mask,
+					THREE.Math3Node.MIX
+				);
+
+				var blurMirror = new THREE.BlurNode( mirror );
+				blurMirror.size = new THREE.Vector2( WIDTH, HEIGHT );
+				blurMirror.coord = new THREE.FunctionNode( "projCoord.xyz / projCoord.q", "vec3" );
+				blurMirror.coord.keywords[ "projCoord" ] = new THREE.OperatorNode( mirror.offset, mirror.coord, THREE.OperatorNode.ADD );
+				blurMirror.radius.x = blurMirror.radius.y = 0;
+
+				groundMirrorMaterial = new THREE.PhongNodeMaterial();
+				groundMirrorMaterial.environment = blurMirror; // or add "mirror" variable to disable blur
+				groundMirrorMaterial.environmentAlpha = mask;
+				groundMirrorMaterial.normal = normal;
+				//groundMirrorMaterial.normalScale = new THREE.FloatNode( 1 );
+				groundMirrorMaterial.build();
+
+				var mirrorMesh = new THREE.Mesh( planeGeo, groundMirrorMaterial );
+				mirrorMesh.add( groundMirror );
+
+				mirrorMesh.name = 'mirror ' + ( ++ meshCount );
+
+				mirrorMesh.rotateX( - Math.PI / 2 );
+
+				console.log(mirrorMesh)
+				console.log(editor.scene)
+				// var json = JSON.stringify(mirrorMesh)
+				// console.log( json )
+				// console.log(JSON.parse( json ))
+
+				editor.execute( new AddObjectCommand( mirrorMesh ) );
+
+				editor.signals.RenderEverywhere.dispatch();
+
+			}
+
+		});
+
+	} );
+	options.add( option );
+
 	// Box
 
 	var option = new UI.Row();

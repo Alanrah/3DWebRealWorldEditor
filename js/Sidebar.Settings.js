@@ -14,7 +14,7 @@ Sidebar.Settings = function ( editor ) {
 	// class
 
 	var options = {
-		'css/light.css': 'light',
+		//'css/light.css': 'light',
 		'css/dark.css': 'dark'
 	};
 

@@ -359,3 +359,21 @@ li {
 	width: 280px;
 	height: 29px;
 }
+
+#diag{
+	display:none;
+	width: 310px;
+	/*top: 300px;*/top:100px;
+	/*bottom: 32px;不设置bottom，滚动条不滚*/
+	left: 330px;
+	position: absolute;
+	overflow: auto;
+	background-color: #111;
+	border:solid 10px #111;
+	color: #888;
+}
+	#diag .Panel{
+		color: #888;
+		padding: 10px;
+		border-top: 1px solid #222;
+	}

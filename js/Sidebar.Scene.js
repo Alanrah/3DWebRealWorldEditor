@@ -149,7 +149,6 @@ Sidebar.Scene = function ( editor ) {
 
 	container.add( backgroundImageRow );
 
-/*
 	//sKyBoxImage
 	
 	function onSkyBoxImageChanged() {
@@ -196,7 +195,6 @@ Sidebar.Scene = function ( editor ) {
 	skyBoxImageRow.add( imageRow );
 	container.add( skyBoxImageRow );
 
-*/
 	// fog
 
 	function onFogChanged() {
