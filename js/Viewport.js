@@ -769,30 +769,11 @@ function dragMatFun(){
 
 	} );
 
-	signals.SSAO.add( function () {
+	signals.Postprocess.add( function () {
 
 		render();
 
 	} );
-
-	signals.SAO.add( function () {
-
-		render();
-
-	} );
-
-	signals.BLOOM.add( function () {
-
-		render();
-
-	} );
-
-	signals.SMAA.add( function () {
-
-		render();
-
-	} );
-
 
 	//
 

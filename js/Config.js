@@ -6,7 +6,7 @@ var Config = function ( name ) {
 
 //浏览器localStorage的信息
 	var storage = {
-		'autosave': false,
+		'autosave': true,
 		'theme': 'css/dark.css',
 		'project/renderer': 'WebGLRenderer',
 		'project/renderer/antialias': true,

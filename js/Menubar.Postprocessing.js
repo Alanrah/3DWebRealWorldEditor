@@ -12,6 +12,23 @@ Menubar.Postprocessing = function ( editor ) {
 	options.setClass( 'options' );
 	container.add( options );
 
+	//none
+	//
+	var option = new UI.Row();
+	option.setClass( 'option' );
+	option.setTextContent( 'NONE' );
+	option.onClick( function () {
+
+		editor.SSAOpostprocessing = false;
+		editor.SAOpostprocessing = false;
+		editor.HDRpostprocessing = false;
+		editor.BLOOMpostprocessing = false;
+		editor.SMAApostprocessing = false;
+
+		editor.signals.Postprocess.dispatch();
+
+	} );
+	options.add( option );
 	// SSAO
 
 	var option = new UI.Row();
@@ -25,7 +42,7 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.BLOOMpostprocessing = false;
 		editor.SMAApostprocessing = false;
 
-		editor.signals.SSAO.dispatch();
+		editor.signals.Postprocess.dispatch();
 
 	} );
 	options.add( option );
@@ -43,7 +60,7 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.BLOOMpostprocessing = false;
 		editor.SMAApostprocessing = false;
 
-		editor.signals.SAO.dispatch();
+		editor.signals.Postprocess.dispatch();
 
 	} );
 	options.add( option );
@@ -61,7 +78,7 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.BLOOMpostprocessing = false;
 		editor.SMAApostprocessing = false;
 
-		editor.signals.HDR.dispatch();
+		editor.signals.Postprocess.dispatch();
 
 	} );
 	options.add( option );
@@ -79,7 +96,7 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.BLOOMpostprocessing = true;
 		editor.SMAApostprocessing = false;
 
-		editor.signals.BLOOM.dispatch();
+		editor.signals.Postprocess.dispatch();
 
 	} );
 	options.add( option );
@@ -97,7 +114,7 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.BLOOMpostprocessing = true;
 		editor.SMAApostprocessing = false;
 
-		editor.signals.SMAA.dispatch();
+		editor.signals.Postprocess.dispatch();
 
 	} );
 	options.add( option );

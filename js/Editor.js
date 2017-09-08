@@ -79,11 +79,7 @@ var Editor = function () {
 		refreshSidebarObject3D: new Signal(),
 		historyChanged: new Signal(),
 
-		SSAO: new Signal(),
-		SAO: new Signal(),
-		HDR: new Signal(),
-		BLOOM: new Signal(),
-		SMAA: new Signal(),
+		Postprocess: new Signal(),
 
 		NDTexture: new Signal(),
 		RenderEverywhere:  new Signal()

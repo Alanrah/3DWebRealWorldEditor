@@ -116,22 +116,44 @@ Sidebar.Scene = function ( editor ) {
 	container.add( outliner );
 	container.add( new UI.Break() );
 
+	var backgroundrow = new UI.Row();
+	backgroundrow.add( new UI.Text( 'Background' ).setWidth( '90px' ) );
+	container.add(backgroundrow);
+
+
+	var backgroundType = new UI.Select().setOptions( {
+			'none':'None',
+			'backgroundcolor': 'BackgroundColor',
+			'backgroundimage': 'backgroundImage',
+			'skyboximage': 'SkyBoxImage'
+
+		} ).setWidth( '150px' ).onChange(function (){
+
+			//onbackgroundchanged();
+			refushBackgroundUI();
+		});
+	backgroundType.setValue( "none" );
+
+	backgroundrow.add(backgroundType);
+
+	var backgroundProperties = new UI.Row().setDisplay('none');
+	container.add(backgroundProperties);
 	// background
 
-	function onBackgroundChanged() {
+	function onBackgroundColorChanged() {
 
 		signals.sceneBackgroundChanged.dispatch( backgroundColor.getHexValue() );
 
 	}
 
-	var backgroundRow = new UI.Row();
+	var backgroundRow = new UI.Row().setDisplay('none');
 
-	var backgroundColor = new UI.Color().setValue( '#aaaaaa' ).onChange( onBackgroundChanged );
+	var backgroundColor = new UI.Color().setValue( '#aaaaaa' ).onChange( onBackgroundColorChanged );
 
 	backgroundRow.add( new UI.Text( 'BackgroundColor' ).setWidth( '120px' ) );
 	backgroundRow.add( backgroundColor );
 
-	container.add( backgroundRow );
+	backgroundProperties.add( backgroundRow );
 
 	//backgroundImage
 	
@@ -140,14 +162,14 @@ Sidebar.Scene = function ( editor ) {
 		signals.sceneBackgroundImageChanged.dispatch( backgroundImage.getValue() );
 	}
 
-	var backgroundImageRow = new UI.Row();
+	var backgroundImageRow = new UI.Row().setDisplay('none');
 
 	var backgroundImage = new UI.Texture().onChange( onBackgroundImageChanged );
 
 	backgroundImageRow.add( new UI.Text( 'BackgroundImage' ).setWidth( '120px' ) );
 	backgroundImageRow.add( backgroundImage );
 
-	container.add( backgroundImageRow );
+	backgroundProperties.add( backgroundImageRow );
 
 	//sKyBoxImage
 	
@@ -165,12 +187,12 @@ Sidebar.Scene = function ( editor ) {
 		}
 		else{
 			skyBoxImageEnabled.setValue(false);
-			onBackgroundChanged();
+			onBackgroundColorChanged();
 		}
 		
 	}
 
-	var skyBoxImageRow = new UI.Row();
+	var skyBoxImageRow = new UI.Row().setDisplay('none');
 
 	skyBoxImageRow.add( new UI.Text( 'SkyBoxImage:天空盒背景' ).setWidth( '170px' ) );
 	skyBoxImageEnabled = new UI.Checkbox( false ).setWidth( '15px' ).onChange(onSkyBoxImageChanged)
@@ -193,8 +215,24 @@ Sidebar.Scene = function ( editor ) {
 	imageRow.add(skyBoxImageNZ);
 
 	skyBoxImageRow.add( imageRow );
-	container.add( skyBoxImageRow );
+	backgroundProperties.add( skyBoxImageRow );
 
+	// refushBackgroundUI
+
+	function refushBackgroundUI() {
+
+		var type = backgroundType.getValue();
+		if(type === 'none'){
+
+			signals.sceneBackgroundChanged.dispatch( backgroundColor.getHexValue() );
+		}
+
+		backgroundProperties.setDisplay( type === 'none' ? 'none' : '' );
+		backgroundRow.setDisplay( type === 'backgroundcolor' ? '' : 'none' );
+		backgroundImageRow.setDisplay( type === 'backgroundimage' ? '' : 'none' );
+		skyBoxImageRow.setDisplay( type === 'skyboximage' ? '' : 'none' );
+
+	}
 	// fog
 
 	function onFogChanged() {
@@ -292,6 +330,8 @@ Sidebar.Scene = function ( editor ) {
 		}
 
 		if ( scene.background ) {
+
+			if(typeof(scene.background.getHex)==='function')
 
 			backgroundColor.setHexValue( scene.background.getHex() );
 
