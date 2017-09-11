@@ -180,6 +180,24 @@ UI.Div = function () {
 UI.Div.prototype = Object.create( UI.Element.prototype );
 UI.Div.prototype.constructor = UI.Div;
 
+// a
+
+UI.A = function () {
+
+	UI.Element.call( this );
+
+	this.dom = document.createElement( 'a' );
+	this.dom.href = "models/index.html" ;
+	this.dom.target = '_blank' ;
+	this.dom.innerText = 'ModelLibrary';
+
+	return this;
+
+};
+
+UI.A.prototype = Object.create( UI.Element.prototype );
+UI.A.prototype.constructor = UI.A;
+
 // Row
 
 UI.Row = function () {

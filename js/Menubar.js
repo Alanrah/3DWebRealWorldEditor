@@ -19,6 +19,19 @@ var Menubar = function ( editor ) {
 	container.add( new Menubar.Help( editor ) );
 	container.add( new Menubar.Status( editor ) );
 
+	var ahref = new UI.A();
+
+	var title = new UI.Panel();
+	title.setClass( 'title' );
+	title.add( ahref );
+
+	var containe = new UI.Panel();
+	containe.setClass( 'menu' );
+	containe.add( title );
+
+	container.add(containe);
+
+
 	return container;
 
 };
