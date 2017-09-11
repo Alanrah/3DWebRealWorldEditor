@@ -292,7 +292,14 @@ Sidebar.Scene = function ( editor ) {
 
 	var fogDensity = new UI.Number( 0.05 ).setWidth( '40px' ).setRange( 0, 0.1 ).setPrecision( 3 ).onChange( onFogChanged );
 	fogPropertiesRow.add( fogDensity );
+    
+    signals.ShowFog.add(function (color,near,far){
+    	fogColor.setValue( color );
+    	fogNear.setValue( near );
+    	fogFar.setValue( far );
+    	onFogChanged();
 
+    })
 	//
 
 	function refreshUI() {
@@ -334,6 +341,7 @@ Sidebar.Scene = function ( editor ) {
 			if(typeof(scene.background.getHex)==='function')
 
 			backgroundColor.setHexValue( scene.background.getHex() );
+
 
 		}
 

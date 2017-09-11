@@ -25,7 +25,6 @@ Menubar.Add = function ( editor ) {
 	editor.signals.editorCleared.add( function () {
 
 		meshCount = 0;
-		lightCount = 0;
 		cameraCount = 0;
 
 	} );

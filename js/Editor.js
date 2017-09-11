@@ -82,7 +82,10 @@ var Editor = function () {
 		Postprocess: new Signal(),
 
 		NDTexture: new Signal(),
-		RenderEverywhere:  new Signal()
+		RenderEverywhere:  new Signal(),
+
+		StageGrid: new Signal(),
+		ShowFog: new Signal()
 
 	};
 

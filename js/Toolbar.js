@@ -73,6 +73,13 @@ var Toolbar = function ( editor ) {
 	var showGrid = new UI.THREE.Boolean( true, 'show' ).onChange( update );
 	buttons.add( showGrid );
 
+	signals.StageGrid.add(function( showvalue ){
+
+		showGrid.setValue(showvalue);
+		update();
+
+	});
+
 	function update() {
 
 		signals.snapChanged.dispatch( snap.getValue() === true ? grid.getValue() : null );
