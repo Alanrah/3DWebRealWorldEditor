@@ -187,9 +187,7 @@ UI.A = function () {
 	UI.Element.call( this );
 
 	this.dom = document.createElement( 'a' );
-	this.dom.href = "models/index.html" ;
 	this.dom.target = '_blank' ;
-	this.dom.innerText = 'ModelLibrary';
 
 	return this;
 

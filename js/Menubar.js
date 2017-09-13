@@ -20,6 +20,8 @@ var Menubar = function ( editor ) {
 	container.add( new Menubar.Status( editor ) );
 
 	var ahref = new UI.A();
+	ahref.dom.innerText = 'ModelLibrary';
+	ahref.dom.href = "models/index.php" ;
 
 	var title = new UI.Panel();
 	title.setClass( 'title' );
