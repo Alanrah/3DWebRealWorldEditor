@@ -48,6 +48,25 @@ Menubar.Add = function ( editor ) {
 
 	options.add( new UI.HorizontalRule() );
 
+	// Lines
+
+	var option = new UI.Row();
+	option.setClass( 'option' );
+	option.setTextContent( 'Lines' );
+	option.onClick( function () {
+
+		var mesh = new THREE.Line();
+		mesh.name = 'Line ' + ( ++ meshCount );
+
+		editor.execute( new AddObjectCommand( mesh ) );
+
+	} );
+	options.add( option );
+
+	//
+
+	options.add( new UI.HorizontalRule() );
+
 	// Plane
 
 	var option = new UI.Row();
