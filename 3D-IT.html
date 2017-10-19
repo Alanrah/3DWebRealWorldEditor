@@ -4,53 +4,33 @@
     <title>3D IT 框架</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <script src="js/libs/jquery-3.2.1.js"></script>
-    <script type="text/javascript" src="build/three.js"></script>
-    <script src="js/controls/OrbitControls.js"></script>
-    <script src="js/Detector.js"></script>
+    <script src="build/three.js"></script>
+        <script src="js/controls/OrbitControls.js"></script>
+        <script src="js/loaders/OBJLoader.js"></script>
 
-    <script src="js/shaders/SSAOShader.js"></script>
-    <script src="js/shaders/CopyShader.js"></script>
-    <script src="js/shaders/FXAAShader.js"></script>
-    <script src="js/shaders/ConvolutionShader.js"></script>
-    <script src="js/shaders/LuminosityHighPassShader.js"></script>
-    <script src="js/shaders/DepthLimitedBlurShader.js"></script>
-    <script src="js/shaders/UnpackDepthRGBAShader.js"></script>
+        <script src="js/Detector.js"></script>
 
-    <script src="js/postprocessing/EffectComposer.js"></script>
-    <script src="js/postprocessing/RenderPass.js"></script>
-    <script src="js/postprocessing/ShaderPass.js"></script>
-    <script src="js/postprocessing/MaskPass.js"></script>
-    <script src="js/postprocessing/OutlinePass.js"></script>
+        <script src="js/shaders/CopyShader.js"></script>
+        <script src="js/shaders/FXAAShader.js"></script>
+        <script src="js/postprocessing/EffectComposer.js"></script>
+        <script src="js/postprocessing/RenderPass.js"></script>
+        <script src="js/postprocessing/ShaderPass.js"></script>
+        <script src="js/postprocessing/OutlinePass.js"></script>
+        <script src="js/libs/stats.min.js"></script>
+        <script src='js/libs/dat.gui.min.js'></script>
+
+    <script src='js/libs/dat.gui.min.js'></script>
     
     <style type="text/css">
-        html {
-
-        height: 100%;
-
-        margin:0;
-
-    }
-
-    body {
-
-        height: 100%;
-
-        margin: 0;
-
-        color: #938E8E;
-
-        /*background-color: #111;*/
-
-        background-image: url('image/3.jpg');
-
-        background-size:100% 100%;
-
-        overflow-x:hidden;
-
-        overflow-y:hidden;
-
-    }
+        body {
+                background-color: #000000;
+                margin: 0px;
+                overflow: hidden;
+                font-family:Monospace;
+                font-size:13px;
+                text-align:center;
+                font-weight: bold;
+            }
     </style>
 </head>
 <body>
@@ -58,16 +38,21 @@
 
 <script>
     var scene, camera, controls,raycaster;
-    var renderer,effectComposer,depthRenderTarget;
+    var renderer,composer,outlinePass,effectFXAA;
+
     var mouse = new THREE.Vector2();
+    var selectedObjects = [];
 
     var SCREEN_WIDTH = window.innerWidth;
     var SCREEN_HEIGHT = window.innerHeight;
+    var devicePixelRatio = window.devicePixelRatio || 1;
 
     var container = document.getElementById( 'container' );
-    renderer = new THREE.WebGLRenderer( { antialias: true,alpha:true } );
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.shadowMap.enabled = true;
     renderer.setClearColor( 0xffffff );
-    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setPixelRatio( devicePixelRatio );
     renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
     container.appendChild( renderer.domElement );
 
@@ -75,8 +60,8 @@
 
     var lineMaterial = new THREE.LineBasicMaterial({
             color: 0x0000ff,
-            linewidth :1,
-            opacity:0.9
+            linewidth :10,
+            opacity:1
         });
 
     var geometry = new THREE.Geometry();//存放线条的vertices
@@ -88,48 +73,9 @@
     raycaster.linePrecision = 3;
     // Load a scene with objects, lights and camera from a JSON file
 
-    function initSSAOPostprocessing() {
-
-        var ssaoPass;
-
-        // Setup render pass
-        var renderPass = new THREE.RenderPass( scene, camera );
-
-        // Setup depth pass
-        depthMaterial = new THREE.MeshDepthMaterial();
-        depthMaterial.depthPacking = THREE.RGBADepthPacking;
-        depthMaterial.blending = THREE.NoBlending;
-
-        var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
-        depthRenderTarget = new THREE.WebGLRenderTarget( SCREEN_WIDTH, SCREEN_HEIGHT, pars );
-        depthRenderTarget.texture.name = "SSAOShader.rt";
-
-        // Setup SSAO pass
-        ssaoPass = new THREE.ShaderPass( THREE.SSAOShader );
-        ssaoPass.renderToScreen = true;
-        //ssaoPass.uniforms[ "tDiffuse" ].value will be set by ShaderPass
-        ssaoPass.uniforms[ "tDepth" ].value = depthRenderTarget.texture;
-        ssaoPass.uniforms[ 'size' ].value.set( SCREEN_WIDTH, SCREEN_HEIGHT );
-        ssaoPass.uniforms[ 'cameraNear' ].value = camera.near;
-        ssaoPass.uniforms[ 'cameraFar' ].value = camera.far;
-        ssaoPass.uniforms[ 'onlyAO' ].value = false;
-        ssaoPass.uniforms[ 'aoClamp' ].value = 0.3;
-        ssaoPass.uniforms[ 'lumInfluence' ].value = 0.5;
-
-        // Add pass to effect composer
-        
-        effectComposer = new THREE.EffectComposer( renderer );
-        effectComposer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-        effectComposer.addPass( renderPass );
-        effectComposer.addPass( ssaoPass );
-
-        }
-
     new THREE.ObjectLoader().load( url, function ( loadedScene ) {
 
         scene = loadedScene;
-
-        // If the loaded file contains a perspective camera, use it with adjusted aspect ratio...
 
         scene.traverse( function ( sceneChild ) {
 
@@ -167,19 +113,87 @@
         }
 
         controls = new THREE.OrbitControls( camera );
-        scene.background = new THREE.Color(0x111111);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
 
+        scene.background = new THREE.Color(0x111111);
+        postProcessing();//函数调用位置，解决了overriddenmaterial的问题
         document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+        document.addEventListener( 'mousemove', onTouchMove );
+        document.addEventListener( 'touchmove', onTouchMove );
 
         animate();
 
             } );
+    function hexToRgb( hex ) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[ 1 ], 16),
+            g: parseInt(result[ 2 ], 16),
+            b: parseInt(result[ 3 ], 16)
+        } : null;
+    }
+
+    function postProcessing(){
+
+        composer = new THREE.EffectComposer( renderer );
+
+        var renderPass = new THREE.RenderPass( scene, camera );
+        composer.addPass( renderPass );
+
+        outlinePass = new THREE.OutlinePass( new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
+        outlinePass.edgeStrength = 3.5;
+        outlinePass.edgeGlow = 1;
+        outlinePass.edgeThickness = 2.2;
+        outlinePass.pulsePeriod = 3;
+
+        outlinePass.visibleEdgeColor = '#ffffff';
+        var colorValue = outlinePass.visibleEdgeColor.replace('#', '');
+        var rgba  = hexToRgb(colorValue);
+        var color = new THREE.Color() ;
+        color.r   = rgba.r / 255;
+        color.g   = rgba.g / 255;
+        color.b   = rgba.b / 255;
+        outlinePass.visibleEdgeColor = color;
+
+        outlinePass.hiddenEdgeColor = '#190a05';
+        var colorValue = outlinePass.hiddenEdgeColor.replace('#', '');
+        var rgba  = hexToRgb(colorValue);
+        var color = new THREE.Color();
+        color.r   = rgba.r / 255;
+        color.g   = rgba.g / 255;
+        color.b   = rgba.b / 255;
+        outlinePass.hiddenEdgeColor = color;
+
+        composer.addPass( outlinePass );
+
+        var onLoad = function ( texture ) {
+            outlinePass.patternTexture = texture;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+        };
+
+        var loader = new THREE.TextureLoader();
+
+        loader.load(
+
+            'tri_pattern.jpg',
+            onLoad
+        );
+
+        effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
+        effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight );
+        effectFXAA.renderToScreen = true;
+        composer.addPass( effectFXAA );
+    }
+    
 
     window.onresize = function () {
 
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-
+        composer.setSize( window.innerWidth, window.innerHeight );
+        effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight );
         renderer.setSize( window.innerWidth, window.innerHeight );
 
             };
@@ -191,17 +205,6 @@
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
-            }
-
-    function animate() {
-
-        requestAnimationFrame( animate );
-        render();
-
-            }
-
-    function render() {
-        
         raycaster.setFromCamera( mouse, camera );
 
         var intersects = raycaster.intersectObjects( boxGroup );
@@ -210,12 +213,12 @@
         var geometryChange = new THREE.Geometry();
         var lineChangeMaterial = new THREE.LineBasicMaterial({
                 color: 0xC02121,
-                linewidth :3,
-                opacity:0.5
+                linewidth :30,
+                opacity:1
             });
         
         if ( intersects.length > 0 ) {
-            scene.remove( lineGroup );
+
             geometryChange = new THREE.Geometry();
 
             var object = intersects[0].object;
@@ -249,16 +252,58 @@
             scene.add( lineGroup );
 
         }
-        renderer.render( scene, camera );
-        //initSSAOPostprocessing();
-        // Render depth into depthRenderTarget
-       
-        //renderer.render( scene, camera, depthRenderTarget, true );
 
-        // Render renderPass and SSAO shaderPass
-        // scene.overrideMaterial = null;
-        // effectComposer.render();
-        // effectComposer.render( scene, camera );
+     }
+
+    function onTouchMove( event ) {
+
+        var x, y;
+
+        if ( event.changedTouches ) {
+
+            x = event.changedTouches[ 0 ].pageX;
+            y = event.changedTouches[ 0 ].pageY;
+
+        } else {
+
+            x = event.clientX;
+            y = event.clientY;
+
+        }
+
+        mouse.x = ( x / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
+        checkIntersection();
+
+        }
+
+    function addSelectedObject(object) {
+        selectedObjects = [];
+        selectedObjects.push(object);
+    }
+
+    function checkIntersection() {
+
+        raycaster.setFromCamera( mouse, camera );
+
+        var intersects = raycaster.intersectObjects( boxGroup );
+
+        if ( intersects.length > 0 ) {
+            var selectedObject = intersects[ 0 ].object;
+            addSelectedObject(selectedObject);
+            outlinePass.selectedObjects = selectedObjects;
+        }
+    }
+
+    function animate() {
+
+        requestAnimationFrame( animate );
+        renderer.autoClear = true;
+        renderer.setClearColor( 0xfff0f0 );
+        renderer.setClearAlpha( 0.0 );
+        //renderer.render( scene, camera );
+        composer.render();
 
             }
 </script>
