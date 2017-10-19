@@ -8,6 +8,20 @@
     <script type="text/javascript" src="build/three.js"></script>
     <script src="js/controls/OrbitControls.js"></script>
     <script src="js/Detector.js"></script>
+
+    <script src="js/shaders/SSAOShader.js"></script>
+    <script src="js/shaders/CopyShader.js"></script>
+    <script src="js/shaders/FXAAShader.js"></script>
+    <script src="js/shaders/ConvolutionShader.js"></script>
+    <script src="js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="js/shaders/DepthLimitedBlurShader.js"></script>
+    <script src="js/shaders/UnpackDepthRGBAShader.js"></script>
+
+    <script src="js/postprocessing/EffectComposer.js"></script>
+    <script src="js/postprocessing/RenderPass.js"></script>
+    <script src="js/postprocessing/ShaderPass.js"></script>
+    <script src="js/postprocessing/MaskPass.js"></script>
+    <script src="js/postprocessing/OutlinePass.js"></script>
     
     <style type="text/css">
         html {
@@ -44,7 +58,7 @@
 
 <script>
     var scene, camera, controls,raycaster;
-    var renderer;
+    var renderer,effectComposer,depthRenderTarget;
     var mouse = new THREE.Vector2();
 
     var SCREEN_WIDTH = window.innerWidth;
@@ -73,6 +87,43 @@
     raycaster = new THREE.Raycaster();
     raycaster.linePrecision = 3;
     // Load a scene with objects, lights and camera from a JSON file
+
+    function initSSAOPostprocessing() {
+
+        var ssaoPass;
+
+        // Setup render pass
+        var renderPass = new THREE.RenderPass( scene, camera );
+
+        // Setup depth pass
+        depthMaterial = new THREE.MeshDepthMaterial();
+        depthMaterial.depthPacking = THREE.RGBADepthPacking;
+        depthMaterial.blending = THREE.NoBlending;
+
+        var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
+        depthRenderTarget = new THREE.WebGLRenderTarget( SCREEN_WIDTH, SCREEN_HEIGHT, pars );
+        depthRenderTarget.texture.name = "SSAOShader.rt";
+
+        // Setup SSAO pass
+        ssaoPass = new THREE.ShaderPass( THREE.SSAOShader );
+        ssaoPass.renderToScreen = true;
+        //ssaoPass.uniforms[ "tDiffuse" ].value will be set by ShaderPass
+        ssaoPass.uniforms[ "tDepth" ].value = depthRenderTarget.texture;
+        ssaoPass.uniforms[ 'size' ].value.set( SCREEN_WIDTH, SCREEN_HEIGHT );
+        ssaoPass.uniforms[ 'cameraNear' ].value = camera.near;
+        ssaoPass.uniforms[ 'cameraFar' ].value = camera.far;
+        ssaoPass.uniforms[ 'onlyAO' ].value = false;
+        ssaoPass.uniforms[ 'aoClamp' ].value = 0.3;
+        ssaoPass.uniforms[ 'lumInfluence' ].value = 0.5;
+
+        // Add pass to effect composer
+        
+        effectComposer = new THREE.EffectComposer( renderer );
+        effectComposer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+        effectComposer.addPass( renderPass );
+        effectComposer.addPass( ssaoPass );
+
+        }
 
     new THREE.ObjectLoader().load( url, function ( loadedScene ) {
 
@@ -116,6 +167,7 @@
         }
 
         controls = new THREE.OrbitControls( camera );
+        scene.background = new THREE.Color(0x111111);
 
         document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 
@@ -161,8 +213,9 @@
                 linewidth :3,
                 opacity:0.5
             });
-
+        
         if ( intersects.length > 0 ) {
+            scene.remove( lineGroup );
             geometryChange = new THREE.Geometry();
 
             var object = intersects[0].object;
@@ -197,6 +250,15 @@
 
         }
         renderer.render( scene, camera );
+        //initSSAOPostprocessing();
+        // Render depth into depthRenderTarget
+       
+        //renderer.render( scene, camera, depthRenderTarget, true );
+
+        // Render renderPass and SSAO shaderPass
+        // scene.overrideMaterial = null;
+        // effectComposer.render();
+        // effectComposer.render( scene, camera );
 
             }
 </script>
