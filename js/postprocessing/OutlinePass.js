@@ -24,7 +24,7 @@ THREE.OutlinePass = function ( resolution, scene, camera, selectedObjects ) {
 
 	var resx = Math.round( this.resolution.x / this.downSampleRatio );
 	var resy = Math.round( this.resolution.y / this.downSampleRatio );
-
+//抠图  轮廓提取算法
 	this.maskBufferMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
 	this.maskBufferMaterial.side = THREE.DoubleSide;
 	this.renderTargetMaskBuffer = new THREE.WebGLRenderTarget( this.resolution.x, this.resolution.y, pars );

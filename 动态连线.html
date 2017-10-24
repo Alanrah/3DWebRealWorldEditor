@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D IT 框架</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script src="js/libs/jquery-3.2.1.js"></script>
+    <script type="text/javascript" src="build/three.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+    <script src="js/Detector.js"></script>
+
+    <script src="js/shaders/SSAOShader.js"></script>
+    <script src="js/shaders/CopyShader.js"></script>
+    <script src="js/shaders/FXAAShader.js"></script>
+    <script src="js/shaders/ConvolutionShader.js"></script>
+    <script src="js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="js/shaders/DepthLimitedBlurShader.js"></script>
+    <script src="js/shaders/UnpackDepthRGBAShader.js"></script>
+
+    <script src="js/postprocessing/EffectComposer.js"></script>
+    <script src="js/postprocessing/RenderPass.js"></script>
+    <script src="js/postprocessing/ShaderPass.js"></script>
+    <script src="js/postprocessing/MaskPass.js"></script>
+    <script src="js/postprocessing/OutlinePass.js"></script>
+    
+    <style type="text/css">
+        html {
+
+        height: 100%;
+
+        margin:0;
+
+    }
+
+    body {
+
+        height: 100%;
+
+        margin: 0;
+
+        color: #938E8E;
+
+        /*background-color: #111;*/
+
+        background-image: url('image/3.jpg');
+
+        background-size:100% 100%;
+
+        overflow-x:hidden;
+
+        overflow-y:hidden;
+
+    }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+
+<script>
+    var scene, camera, controls,raycaster;
+    var renderer,effectComposer,depthRenderTarget;
+    var mouse = new THREE.Vector2();
+
+    var SCREEN_WIDTH = window.innerWidth;
+    var SCREEN_HEIGHT = window.innerHeight;
+
+    var container = document.getElementById( 'container' );
+    renderer = new THREE.WebGLRenderer( { antialias: true,alpha:true } );
+    renderer.setClearColor( 0xffffff );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+    container.appendChild( renderer.domElement );
+
+    var url = 'scene.json';
+
+    var lineMaterial = new THREE.LineBasicMaterial({
+            color: 0x0000ff,
+            linewidth :15,
+            opacity:0.9
+        });
+
+    var geometry = new THREE.Geometry();//存放线条的vertices
+    var boxGroup = new Array();
+    var lineGroup = new THREE.Group();
+    lineGroup.name='lineGroup';
+
+    raycaster = new THREE.Raycaster();
+    raycaster.linePrecision = 3;
+    // Load a scene with objects, lights and camera from a JSON file
+
+    new THREE.ObjectLoader().load( url, function ( loadedScene ) {
+
+        scene = loadedScene;
+
+        // If the loaded file contains a perspective camera, use it with adjusted aspect ratio...
+
+        scene.traverse( function ( sceneChild ) {
+
+            if ( sceneChild.type === 'PerspectiveCamera' ) {
+
+                camera = sceneChild;
+                camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
+                camera.updateProjectionMatrix();
+
+            }
+
+            if(sceneChild.type == 'Mesh'){
+
+                if(sceneChild.geometry.type == 'BoxBufferGeometry' || sceneChild.geometry.type == 'SphereBufferGeometry'){
+                    boxGroup.push(sceneChild);
+                    geometry.vertices.push(sceneChild.position);
+                }
+            }
+
+        } );
+        //geometry.vertices.push(geometry.vertices[0]);
+    
+        var line = new THREE.Line( geometry, lineMaterial );
+        line.position.y -= 1;
+        scene.add( line );
+
+
+        // ... else create a new camera and use it in the loaded scene
+
+        if ( camera === undefined ) {
+
+            camera = new THREE.PerspectiveCamera( 30, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 10000 );
+            camera.position.set( 10, 30, 20 );
+
+        }
+
+        controls = new THREE.OrbitControls( camera );
+        scene.background = new THREE.Color(0x111111);
+
+        document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
+        animate();
+
+            } );
+
+    window.onresize = function () {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+            };
+
+    function onDocumentMouseDown( event ) {
+
+        event.preventDefault();
+
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+        raycaster.setFromCamera( mouse, camera );
+
+        var intersects = raycaster.intersectObjects( boxGroup );
+
+        
+        var geometryChange = new THREE.Geometry();
+        var lineChange1Material = new THREE.LineBasicMaterial({
+                color: 0x3D9892,
+                linewidth :5,
+                opacity:0.7
+            });
+        var lineChange2Material = new THREE.LineBasicMaterial({
+                color: 0x3D9892,
+                linewidth :5,
+                opacity:0.5
+            });
+        var lineChange3Material = new THREE.LineBasicMaterial({
+                color: 0x3D9892,
+                linewidth :5,
+                opacity:0.3
+            });
+        
+//只重画当前选中部分的线条，删除则显示所有选中部分的线条
+        scene.traverse( function ( sceneChild ) {
+
+            if ( sceneChild.name === 'lineGroup' ) {
+            sceneChild.children = new Array();
+            scene.remove(sceneChild);
+
+            }
+
+        } );
+        
+        if ( intersects.length > 0 ) {
+
+            geometryChange = new THREE.Geometry();
+
+            var object = intersects[0].object;
+            //object.translateY(1);
+            var position = intersects[0].object.position;
+            //var x= object.clone(true);
+            //搜索 geometry.vertices 中的 position 重新绘制选中物体相关linet
+            var p = geometry.vertices.length;
+            for(i=0;i<p;i++){
+                if(geometry.vertices[i] == position){
+
+                    if (i == p - 1){
+                        geometryChange.vertices.push(geometry.vertices[p - 2]);
+                        geometryChange.vertices.push(position);
+                    }
+                    else if(i == 0){
+                        geometryChange.vertices.push(position);
+                        geometryChange.vertices.push(geometry.vertices[i+1]);
+                    }
+
+                    else{
+                        geometryChange.vertices.push(geometry.vertices[i-1]);
+                        geometryChange.vertices.push(position);
+                        geometryChange.vertices.push(geometry.vertices[i+1]);
+                        
+                    }
+                }
+            }
+            var lineChange1 = new THREE.Line( geometryChange, lineChange1Material );
+            var lineChange2 = new THREE.Line( geometryChange, lineChange2Material );
+            var lineChange3 = new THREE.Line( geometryChange, lineChange3Material );
+            lineChange1.position.y -= 1;
+            lineChange2.position.y -= 0.99;
+            lineChange3.position.y -= 0.98;
+            lineGroup.add(lineChange1);
+            lineGroup.add(lineChange2);
+            lineGroup.add(lineChange3);
+
+            scene.add( lineGroup );
+
+        }
+}
+
+    function animate() {
+
+        requestAnimationFrame( animate );
+        renderer.render( scene, camera );
+
+            }
+</script>
+</body>
+</html>

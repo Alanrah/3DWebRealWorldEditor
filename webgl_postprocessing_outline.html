@@ -1,348 +1,421 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>three.js webgl - post processing - Outline Pass</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <style>
-            body {
-                background-color: #000000;
-                margin: 0px;
-                overflow: hidden;
-                font-family:Monospace;
-                font-size:13px;
-                text-align:center;
-                font-weight: bold;
-            }
-
-            a {
-                color:#00ff78;
-            }
-
-            #info {
-                color: #fff;
-                position: absolute;
-                top: 10px;
-                width: 100%;
-                text-align: center;
-                display:block;
-            }
-            .dg.ac {
-                z-index: 1 !important; /* FIX DAT.GUI */
-            }
-        </style>
-    </head>
-    <body>
-        <script src="build/three.js"></script>
-        <script src="js/controls/OrbitControls.js"></script>
-        <script src="js/loaders/OBJLoader.js"></script>
-
-        <script src="js/Detector.js"></script>
-
-        <script src="js/shaders/CopyShader.js"></script>
-        <script src="js/shaders/FXAAShader.js"></script>
-        <script src="js/postprocessing/EffectComposer.js"></script>
-        <script src="js/postprocessing/RenderPass.js"></script>
-        <script src="js/postprocessing/ShaderPass.js"></script>
-        <script src="js/postprocessing/OutlinePass.js"></script>
-        <script src="js/libs/stats.min.js"></script>
-        <script src='js/libs/dat.gui.min.js'></script>
-
-        <div id="info">
-            <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Outline Pass by <a href="http://eduperiment.com" target="_blank" rel="noopener">Prashant Sharma</a> and <a href="https://clara.io" target="_blank" rel="noopener">Ben Houston</a><br/><br/>
-        </div>
-
-        <script>
-
-            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
-            var container, stats;
-            var camera, scene, renderer, controls;
-            var mesh, decal;
-            var raycaster = new THREE.Raycaster();
-
-            var mouse = new THREE.Vector2();
-            var selectedObjects = [];
-
-            var composer, effectFXAA, outlinePass;
-            var obj3d = new THREE.Object3D();
-
-var geometry = new THREE.Geometry();//存放线条的vertices
-    var boxGroup = new Array();
-    var lineGroup = new THREE.Group();
-    lineGroup.name='lineGroup';
-            var params = {
-                edgeStrength: 3.0,
-                edgeGlow: 0.0,
-                edgeThickness: 1.0,
-                pulsePeriod: 0,
-                rotate: false,
-                usePatternTexture: false
-            };
-        var lineMaterial = new THREE.LineBasicMaterial({
-            color: 0x0000ff,
-            linewidth :1,
-            opacity:0.9
-        });
-
-            // Init gui
-            var gui = new dat.GUI();
-            gui.add(params, "edgeStrength", 0.01, 10).onChange(function( value ) {
-                outlinePass.edgeStrength = Number(value);
-            });
-            gui.add(params, "edgeGlow", 0.0, 1).onChange(function( value ) {
-                outlinePass.edgeGlow = Number(value);
-            });
-            gui.add(params, "edgeThickness", 1, 4).onChange(function( value ) {
-                outlinePass.edgeThickness = Number(value);
-            });
-            gui.add(params, "pulsePeriod", 0.0, 5).onChange(function( value ) {
-                outlinePass.pulsePeriod = Number(value);
-            });
-            gui.add(params, "rotate");
-            gui.add(params, "usePatternTexture").onChange(function( value ) {
-                outlinePass.usePatternTexture = value;
-            });
-            var Configuration = function() {
-                this.visibleEdgeColor = "#ffffff";
-                this.hiddenEdgeColor  = "#190a05";
-            };
-            var conf = new Configuration();
-
-            var controladorVisible = gui.addColor( conf, 'visibleEdgeColor');
-            var controladorHidden = gui.addColor( conf, 'hiddenEdgeColor');
-            controladorVisible.onChange(function( colorValue ) {
-                //the return value by the chooser is like as: #ffff
-                colorValue = colorValue.replace('#', '');
-                function hexToRgb( hex ) {
-                    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                    return result ? {
-                        r: parseInt(result[ 1 ], 16),
-                        g: parseInt(result[ 2 ], 16),
-                        b: parseInt(result[ 3 ], 16)
-                    } : null;
-                }
-
-                var rgba  = hexToRgb(colorValue);
-                var color = outlinePass.visibleEdgeColor;
-                color.r   = rgba.r / 255;
-                color.g   = rgba.g / 255;
-                color.b   = rgba.b / 255;
-            });
-
-            controladorHidden.onChange(function( colorValue ) {
-                //the return value by the chooser is like as: #ffff
-                colorValue = colorValue.replace('#', '');
-                function hexToRgb( hex ) {
-                    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                    return result ? {
-                        r: parseInt(result[ 1 ], 16),
-                        g: parseInt(result[ 2 ], 16),
-                        b: parseInt(result[ 3 ], 16)
-                    } : null;
-                }
-
-                var rgba  = hexToRgb(colorValue);
-                color.r   = rgba.r / 255;
-                color.g   = rgba.g / 255;
-                color.b   = rgba.b / 255;
-                var color = outlinePass.hiddenEdgeColor;
-                
-            });
-
-            init();
-            animate();
-
-            function init() {
-
-                container = document.createElement( 'div' );
-                document.body.appendChild( container );
-
-                var width = window.innerWidth || 1;
-                var height = window.innerHeight || 1;
-                var devicePixelRatio = window.devicePixelRatio || 1;
-
-                renderer = new THREE.WebGLRenderer( { antialias: false } );
-                renderer.shadowMap.enabled = true;
-                renderer.setClearColor( 0xa0a0a0 );
-                renderer.setPixelRatio( 1 );
-                renderer.setSize( width, height );
-                document.body.appendChild( renderer.domElement );
-
-                camera = new THREE.PerspectiveCamera( 45, width / height, 0.1, 100 );
-                camera.position.z = 8;
-                camera.position.x = 0;
-
-                scene = new THREE.Scene();
-
-        new THREE.ObjectLoader().load( 'scene.json', function ( loadedScene ) {
-        scene = new THREE.Scene();
-        scene = loadedScene;
-
-        scene.traverse( function ( sceneChild ) {
-
-            if ( sceneChild.type === 'PerspectiveCamera' ) {
-
-                camera = sceneChild;
-                camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
-                camera.updateProjectionMatrix();
-
-            }
+	<head>
+		<title>three.js webgl - post processing - Outline Pass</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+			}
 
-            if(sceneChild.type == 'Mesh'){
-
-                if(sceneChild.geometry.type == 'BoxBufferGeometry' || sceneChild.geometry.type == 'SphereBufferGeometry'){
-                    sceneChild.geometry.center();
-                    sceneChild.geometry.computeBoundingSphere();
-                    scale = 0.2*sceneChild.geometry.boundingSphere.radius;
-                    boxGroup.push(sceneChild);
-                    geometry.vertices.push(sceneChild.position);
-                }
-            }
+			a {
+				color:#00ff78;
+			}
 
-        } );
-        //geometry.vertices.push(geometry.vertices[0]);
-    
-        var line = new THREE.Line( geometry, lineMaterial );
-        line.position.y -= 1;
-        scene.add( line );
-
-
-        // ... else create a new camera and use it in the loaded scene
-
-        if ( camera === undefined ) {
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				display:block;
+			}
+			.dg.ac {
+				z-index: 1 !important; /* FIX DAT.GUI */
+			}
+		</style>
+	</head>
+	<body>
+		<script src="../build/three.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+		<script src="js/loaders/OBJLoader.js"></script>
+	
+		<script src="js/Detector.js"></script>
 
-            camera = new THREE.PerspectiveCamera( 45, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 10000 );
-            camera.position.set( 10, 30, 20 );
+		<script src="js/shaders/CopyShader.js"></script>
+		<script src="js/shaders/FXAAShader.js"></script>
+		<script src="js/postprocessing/EffectComposer.js"></script>
+		<script src="js/postprocessing/RenderPass.js"></script>
+		<script src="js/postprocessing/ShaderPass.js"></script>
+		<script src="js/postprocessing/OutlinePass.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src='js/libs/dat.gui.min.js'></script>
+		<script>
 
-        }
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-        controls = new THREE.OrbitControls( camera );
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.25;
+			var container, stats;
+			var camera, scene, renderer, controls;
+			var raycaster = new THREE.Raycaster();
 
-        scene.background = new THREE.Color(0x111111);
-        //document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-        document.addEventListener( 'mousemove', onTouchMove );
-        document.addEventListener( 'touchmove', onTouchMove );
+			var mouse = new THREE.Vector2();
+			var selectedObjects = [];
 
-            } );
+			var geometry = new THREE.Geometry();//存放线条的vertices
+			var geometryChange = new THREE.Geometry();//存放当前选中物体相关线条的vertices
 
-                stats = new Stats();
-                container.appendChild( stats.dom );
+			var lineGroup = new THREE.Group();//存放动态线条（柱子）
+    		lineGroup.name='lineGroup';
 
-                // postprocessing
-                composer = new THREE.EffectComposer( renderer );
+			var composer, effectFXAA, outlinePass;
+			var obj3d = new THREE.Object3D();
 
-                var renderPass = new THREE.RenderPass( scene, camera );
-                composer.addPass( renderPass );
+			var group = new THREE.Group();
 
-                outlinePass = new THREE.OutlinePass( new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
-                composer.addPass( outlinePass );
-                var onLoad = function ( texture ) {
-                    outlinePass.patternTexture = texture;
-                    texture.wrapS = THREE.RepeatWrapping;
-                    texture.wrapT = THREE.RepeatWrapping;
-                };
+			var params = {
+				edgeStrength: 3.0,
+				edgeGlow: 0.0,
+				edgeThickness: 1.0,
+				pulsePeriod: 0,
+				rotate: false,
+				usePatternTexture: false
+			};
 
-                var loader = new THREE.TextureLoader();
+			// Init gui
 
-                // load a resource
-                loader.load(
-                    // resource URL
-                    'tri_pattern.jpg',
-                    // Function when resource is loaded
-                    onLoad
-                );
+			var gui = new dat.GUI( { width: 300 } );
 
-                effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
-                effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight );
-                effectFXAA.renderToScreen = true;
-                composer.addPass( effectFXAA );
+			gui.add( params, 'edgeStrength', 0.01, 10 ).onChange( function ( value ) {
 
-                window.addEventListener( 'resize', onWindowResize, false );
+				outlinePass.edgeStrength = Number( value );
 
-                window.addEventListener( 'mousemove', onTouchMove );
-                window.addEventListener( 'touchmove', onTouchMove );
+			} );
 
-                function onTouchMove( event ) {
+			gui.add( params, 'edgeGlow', 0.0, 1 ).onChange( function ( value ) {
 
-                    var x, y;
+				outlinePass.edgeGlow = Number( value );
 
-                    if ( event.changedTouches ) {
+			} );
 
-                        x = event.changedTouches[ 0 ].pageX;
-                        y = event.changedTouches[ 0 ].pageY;
+			gui.add( params, 'edgeThickness', 1, 4 ).onChange( function ( value ) {
 
-                    } else {
+				outlinePass.edgeThickness = Number( value );
 
-                        x = event.clientX;
-                        y = event.clientY;
+			} );
 
-                    }
+			gui.add( params, 'pulsePeriod', 0.0, 5 ).onChange( function ( value ) {
 
-                    mouse.x = ( x / window.innerWidth ) * 2 - 1;
-                    mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+				outlinePass.pulsePeriod = Number( value );
 
-                    checkIntersection();
+			} );
 
-                }
+			gui.add( params, 'rotate' );
 
-                function addSelectedObject(object) {
-                    selectedObjects = [];
-                    selectedObjects.push(object);
-                }
+			gui.add( params, 'usePatternTexture' ).onChange( function ( value ) {
 
-                function checkIntersection() {
+				outlinePass.usePatternTexture = value;
 
-                    raycaster.setFromCamera( mouse, camera );
+			} );
 
-                    var intersects = raycaster.intersectObjects( [ scene ], true );
+			var Configuration = function () {
 
-                    if ( intersects.length > 0 ) {
-                        var selectedObject = intersects[ 0 ].object;
-                        addSelectedObject(selectedObject);
-                        outlinePass.selectedObjects = selectedObjects;
-                    }
-                    else {
-                        // outlinePass.selectedObjects = [];
-                    }
-                }
+				this.visibleEdgeColor = '#ffffff';
+				this.hiddenEdgeColor = '#190a05';
 
-            }
+			};
 
-            function onWindowResize() {
+			var conf = new Configuration();
 
-                var width = window.innerWidth || 1;
-                var height = window.innerHeight || 1;
-                var devicePixelRatio = window.devicePixelRatio || 1;
+			var controllerVisible = gui.addColor( conf, 'visibleEdgeColor' ).onChange( function ( value ) {
 
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
+				outlinePass.visibleEdgeColor.set( value );
 
-                renderer.setSize( width, height );
-                composer.setSize( width, height );
-                effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight );
-            }
+			} );
 
-            function animate() {
+			var controllerHidden = gui.addColor( conf, 'hiddenEdgeColor' ).onChange( function ( value ) {
 
-                requestAnimationFrame( animate );
+				outlinePass.hiddenEdgeColor.set( value );
 
-                stats.begin();
+			} );
 
-                var timer = performance.now();
-                if(params.rotate)
-                    group.rotation.y = timer * 0.0001;
-                renderer.autoClear = true;
-                renderer.setClearColor( 0xfff0f0 );
-                renderer.setClearAlpha( 0.0 );
+			init();
+			animate();
 
-                composer.render();
-                stats.end();
-            }
+			function init() {
 
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
 
-        </script>
-    </body>
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				renderer = new THREE.WebGLRenderer( { antialias: false } );
+				renderer.shadowMap.enabled = true;
+				// todo - support pixelRatio in this demo
+				renderer.setSize( width, height );
+				document.body.appendChild( renderer.domElement );
+
+				var manager = new THREE.LoadingManager();
+				manager.onProgress = function ( item, loaded, total ) {
+
+					console.log( item, loaded, total );
+
+				};
+
+				var onProgress = function ( xhr ) {
+					if ( xhr.lengthComputable ) {
+						var percentComplete = xhr.loaded / xhr.total * 100;
+						console.log( Math.round(percentComplete, 2) + '% downloaded' );
+					}
+				};
+
+				var onError = function ( xhr ) {
+				};
+
+				var url = 'nofloor.json';
+				scene = new THREE.Scene();
+				scene.add(group);
+
+
+				var loader= new THREE.ObjectLoader();
+				loader.load( url, function ( loadedScene ) {
+					//scene = loadedScene;
+					console.log(loadedScene);
+					var objects = loadedScene.children;
+					for(var i=0;i<objects.length;i++){
+
+						if(objects[i].type == 'Mesh' ){
+
+							objects[i].receiveShadow = true;
+							objects[i].castShadow = true;
+							geometry.vertices.push(objects[i].position);
+							group.add(objects[i]);
+
+						}
+						
+					}
+
+				} , onProgress, onError);
+
+				var floorMaterial = new THREE.MeshPhongMaterial({color:0x534F4F});
+				floorMaterial.side = THREE.DoubleSide;
+				var floorGeometry = new THREE.PlaneBufferGeometry( 20, 20 );
+				var floorMesh = new THREE.Mesh( floorGeometry, floorMaterial );
+				floorMesh.rotation.x -= Math.PI * 0.5;
+				group.add( floorMesh );
+				floorMesh.receiveShadow = true;
+
+				var light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( 0, 6, 0 );
+				scene.add( light );
+
+				light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( 3, 6, 0 );
+				scene.add( light );
+
+
+				camera = new THREE.PerspectiveCamera( 45, width / height, 1, 10000 );
+				camera.position.set( 10, 20, 10 );
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 2;
+				//controls.maxDistance = 20;
+				//controls.enablePan = false;
+				controls.enableDamping = true;
+				controls.dampingFactor = 0.25;
+
+				//
+				
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				// postprocessing
+
+				composer = new THREE.EffectComposer( renderer );
+
+				var renderPass = new THREE.RenderPass( scene, camera );
+				composer.addPass( renderPass );
+
+				outlinePass = new THREE.OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
+				composer.addPass( outlinePass );
+
+				var onLoad = function ( texture ) {
+
+					outlinePass.patternTexture = texture;
+					texture.wrapS = THREE.RepeatWrapping;
+					texture.wrapT = THREE.RepeatWrapping;
+
+				};
+
+				var loader = new THREE.TextureLoader();
+
+				loader.load( 'tri_pattern.jpg', onLoad );
+
+				effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+				effectFXAA.renderToScreen = true;
+				composer.addPass( effectFXAA );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				window.addEventListener( 'mousemove', onTouchMove );
+				window.addEventListener( 'touchmove', onTouchMove );
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				
+				function onDocumentMouseDown( event ) {
+
+			        event.preventDefault();
+			        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+			        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+			        raycaster.setFromCamera( mouse, camera );
+			        var intersects = raycaster.intersectObjects( [group], true );
+			//只重画当前选中部分的线条，删除则显示所有选中部分的线条
+			        scene.traverse( function ( sceneChild ) {
+			            if ( sceneChild.name === 'lineGroup' ) {
+			            sceneChild.children = new Array();
+			            scene.remove(sceneChild);
+			            }
+			        } );
+			        
+			        if ( intersects.length > 0 && (intersects[0].object.geometry.type== 'BoxBufferGeometry' || intersects[0].object.geometry.type == 'SphereBufferGeometry') ) {
+
+			            var object = intersects[0].object;
+			            geometryChange = new THREE.Geometry();
+			            var position = intersects[0].object.position;
+			            //搜索 geometry.vertices 中的 position 重新绘制选中物体相关linet
+			            var p = geometry.vertices.length;
+			            for(i=0;i<p;i++){
+			                if(geometry.vertices[i] == position){
+
+			                    if (i == p - 1){
+			                        geometryChange.vertices.push(geometry.vertices[p - 2]);
+			                        geometryChange.vertices.push(position);
+			                    }
+			                    else if(i == 0){
+			                        geometryChange.vertices.push(position);
+			                        geometryChange.vertices.push(geometry.vertices[i+1]);
+			                    }
+
+			                    else{
+			                        geometryChange.vertices.push(geometry.vertices[i-1]);
+			                        geometryChange.vertices.push(position);
+			                        geometryChange.vertices.push(geometry.vertices[i+1]);
+			                      
+			                    }
+			                }
+			            }
+			            console.log(geometryChange);
+			            var temp = geometryChange.vertices.length;
+			            var xyz = geometryChange.vertices;
+			            var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+			            var x,y,z,xw,zh;//position(x,y,z),xw是长，y是高，zh
+			            for(i=0;i<temp-1;i++){
+			            	x= (xyz[i].x+xyz[i+1].x)/2;
+			            	y=0.3;
+			            	z=(xyz[i].z+xyz[i+1].z)/2;
+			            	xw=Math.abs(xyz[i].x-xyz[i+1].x);
+			            	zh=Math.abs(xyz[i].z-xyz[i+1].z);
+			            	var geometryBoxLine = new THREE.BoxBufferGeometry( xw, y, zh );
+			            	var cube = new THREE.Mesh( geometryBoxLine, material );
+			            	cube.position.set( x, y, z );
+			            	cube.castShadow = true;
+			            	//圆柱而不是cube
+			            	lineGroup.add( cube );
+
+			            }
+			            console.log(lineGroup);
+            			scene.add( lineGroup );
+            			//outlinePass.selectedObjects = selectedObjects;
+			        }
+			}
+
+				function onTouchMove( event ) {
+
+					var x, y;
+
+					if ( event.changedTouches ) {
+
+						x = event.changedTouches[ 0 ].pageX;
+						y = event.changedTouches[ 0 ].pageY;
+
+					} else {
+
+						x = event.clientX;
+						y = event.clientY;
+
+					}
+
+					mouse.x = ( x / window.innerWidth ) * 2 - 1;
+					mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
+					checkIntersection();
+
+				}
+
+				function addSelectedObject( object ) {
+
+					selectedObjects = [];
+					selectedObjects.push( object );
+
+				}
+
+				function checkIntersection() {
+
+					raycaster.setFromCamera( mouse, camera );
+
+					var intersects = raycaster.intersectObjects( [group], true );
+
+					if ( intersects.length > 0 ) {
+
+						var selectedObject = intersects[ 0 ].object;
+						addSelectedObject( selectedObject );
+						outlinePass.selectedObjects = selectedObjects;
+
+					} else {
+
+						// outlinePass.selectedObjects = [];
+
+					}
+
+				}
+
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
+
+				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+
+				var timer = performance.now();
+
+				if ( params.rotate ) {
+
+					group.rotation.y = timer * 0.0001;
+
+				}
+
+				controls.update();
+
+				composer.render();
+
+				stats.end();
+
+			}
+
+		</script>
+	</body>
 </html>
