@@ -177,7 +177,7 @@
 				var loader= new THREE.ObjectLoader();
 				loader.load( url, function ( loadedScene ) {
 					//scene = loadedScene;
-					console.log(loadedScene);
+
 					var objects = loadedScene.children;
 					for(var i=0;i<objects.length;i++){
 
@@ -212,7 +212,7 @@
 
 
 				camera = new THREE.PerspectiveCamera( 45, width / height, 1, 10000 );
-				camera.position.set( 10, 20, 10 );
+				camera.position.set( 0, 10, 20 );
 
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				controls.minDistance = 2;
@@ -302,28 +302,48 @@
 			                    }
 			                }
 			            }
-			            console.log(geometryChange);
 			            var temp = geometryChange.vertices.length;
 			            var xyz = geometryChange.vertices;
-			            var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
-			            var x,y,z,xw,zh;//position(x,y,z),xw是长，y是高，zh
+			            var material = new THREE.MeshPhongMaterial( {
+										color: 0x156289,
+										emissive: 0x00FFFF,
+										side: THREE.DoubleSide,
+										shading: THREE.FlatShading,
+										vertexColors:THREE.FaceColors
+									} );
+			            var x,y,z,xw,zh,cheight;//position(x,y,z),xw是长，y是高，zh
 			            for(i=0;i<temp-1;i++){
 			            	x= (xyz[i].x+xyz[i+1].x)/2;
-			            	y=0.3;
+			            	y=0.1;
 			            	z=(xyz[i].z+xyz[i+1].z)/2;
-			            	xw=Math.abs(xyz[i].x-xyz[i+1].x);
-			            	zh=Math.abs(xyz[i].z-xyz[i+1].z);
-			            	var geometryBoxLine = new THREE.BoxBufferGeometry( xw, y, zh );
-			            	var cube = new THREE.Mesh( geometryBoxLine, material );
-			            	cube.position.set( x, y, z );
-			            	cube.castShadow = true;
+			            	xw=xyz[i].x-xyz[i+1].x;
+			            	zh=xyz[i].z-xyz[i+1].z;
+			            	cheight=Math.sqrt(xw*xw+zh*zh);//圆柱体长度
+			            	var geometryCylinderLine = new THREE.CylinderBufferGeometry( 0.02, 0.02, cheight,20 );
+			            	var cylinder = new THREE.Mesh( geometryCylinderLine, material );
+			            	cylinder.position.set( x, y, z );//两实体的中点
+			            	cylinder.rotation.x -= Math.PI * 0.5;
+			            	//考虑到局部坐标系和全局坐标系的转换，柱体是在全局坐标系下旋转
+			            	if(xyz[i].x > xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+			            		cylinder.rotation.z -= Math.asin(xw/cheight);//Math.asin(xw/cheight)为柱体要旋转的角度
+			            	else if(xyz[i].x > xyz[i+1].x && xyz[i].z > xyz[i+1].z)
+			            		cylinder.rotation.z += Math.asin(xw/cheight);
+			            	else if(xyz[i].x < xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+			            		cylinder.rotation.z -= Math.asin(xw/cheight);
+			            	else
+			            		cylinder.rotation.z += Math.asin(xw/cheight);
+
+			            	cylinder.castShadow = true;
+			            	cylinder.receiveShadow = true;
 			            	//圆柱而不是cube
-			            	lineGroup.add( cube );
+			            	lineGroup.add( cylinder );
 
 			            }
-			            console.log(lineGroup);
             			scene.add( lineGroup );
-            			//outlinePass.selectedObjects = selectedObjects;
+            			selectedObjects = [];
+						selectedObjects.push( lineGroup );//给选中的线条和物体加发光特效
+						selectedObjects.push( intersects[ 0 ].object );
+            			outlinePass.selectedObjects = selectedObjects;
 			        }
 			}
 
