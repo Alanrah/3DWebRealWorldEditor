@@ -62,7 +62,11 @@ var Viewport = function ( editor ) {
 		effectComposer.addPass( renderPass );
 		effectComposer.addPass( ssaoPass );
 
+		render();
+
 		}
+
+		signals.SSAOpostprocessing.add(initSSAOPostprocessing);
 
 	function initSAOPostprocessing(){
 
@@ -90,7 +94,11 @@ var Viewport = function ( editor ) {
 		saoPass.renderToScreen = true;
 		effectComposer.addPass( saoPass );
 
+		render();
+
 	}
+
+	signals.SAOpostprocessing.add(initSAOPostprocessing);
 
 	function initSMAAPostprocessing(){
 
@@ -102,7 +110,11 @@ var Viewport = function ( editor ) {
 		pass.renderToScreen = true;
 		effectComposer.addPass( pass );
 
+		render();
+
 	}
+
+	signals.SMAApostprocessing.add(initSMAAPostprocessing);
 
 	function initBLOOMPostprocessing( ){
 
@@ -135,11 +147,315 @@ var Viewport = function ( editor ) {
 		effectComposer.addPass(bloomPass);
 		effectComposer.addPass(copyShader);
 
+		render();
+
 	}
+
+	signals.BLOOMpostprocessing.add(initBLOOMPostprocessing);
+
+
+	//物理引擎相关
+	
+	var clock = new THREE.Clock();
+
+	// 物理引擎相关变量
+	
+    var gravityConstant = -9.8;
+    var collisionConfiguration;
+    var dispatcher;
+    var broadphase;
+    var solver;
+    var physicsWorld;
+    var rigidBodies = [];
+    var margin = 0.05;
+    var transformAux1 = new Ammo.btTransform();
+
+    // 高度场相关
+    var terrainWidthExtents = 100;
+    var terrainDepthExtents = 100;
+    var terrainWidth = 128;
+    var terrainDepth = 128;
+    var terrainHalfWidth = terrainWidth / 2;
+    var terrainHalfDepth = terrainDepth / 2;
+    var terrainMaxHeight = 8;
+    var terrainMinHeight = -2;
+
+    var heightData = null;
+    var ammoHeightData = null;
+
+    var maxNumObjectss = 30;
+
+    function initPhysics() {
+        // bullet基本场景配置
+        collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+        dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+        broadphase = new Ammo.btDbvtBroadphase();
+        solver = new Ammo.btSequentialImpulseConstraintSolver();
+        physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+        physicsWorld.setGravity(new Ammo.btVector3(0, gravityConstant, 0));
+    }
+
+    function updatePhysics(deltaTime) {
+
+        physicsWorld.stepSimulation(deltaTime);
+
+        // 更新物体位置
+        for (var i = 0, iL = rigidBodies.length; i <iL; i++ ){
+            var objThree = rigidBodies[i];
+            var objPhys = objThree.userData.physicsBody;
+            var ms = objPhys.getMotionState();
+            if (ms) {
+                ms.getWorldTransform(transformAux1);
+                var p = transformAux1.getOrigin();
+                var q = transformAux1.getRotation();
+                objThree.position.set(p.x(), p.y(), p.z());
+                objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+            }
+        }
+    }
+
+    // 生成连续起伏(利用正弦函数)
+    function generateHeight( width, depth, minHeight, maxHeight ) {
+        // 使用正弦函数生成凹凸不平的场(sinus wave)
+        var size = width * depth;
+        var data = new Float32Array(size);
+
+        var hRange = maxHeight - minHeight;
+        var w2 = width / 2;
+        var d2 = depth / 2;
+        var phaseMult = 12;
+
+        var p = 0;
+        for (var  i = 0; i < depth; i++) {
+            for (var j = 0; j < width; j++) {
+                var radius = Math.sqrt(
+                        Math.pow((j - w2)/w2, 2.0) +
+                        Math.pow((i - d2)/d2, 2.0)
+                );
+
+//                var height = (Math.sin(radius * phaseMult) + 1) * 0.5 * hRange + minHeight;
+                var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
+
+                data[p] = height;
+
+                p++;
+            }
+        }
+
+        return data;
+    }
+
+       // 生成物理引擎用高度场
+    function createTerrainShape(heightData) {
+
+        // This parameter is not really used, since we are using PHY_FLOAT height data type and hence it is ignored
+        var heightScale = 1;
+
+        // Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
+        var upAxis = 1;
+
+        // hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
+        var hdt = "PHY_FLOAT";
+
+        // Set this to your needs (inverts the triangles)
+        var flipQuadEdges = false;
+
+        // Creates height data buffer in Ammo heap
+        ammoHeightData = Ammo._malloc(4 * terrainWidth * terrainDepth);
+
+        // Copy the javascript height data array to the Ammo one.
+        var p = 0;
+        var p2 = 0;
+        for ( var j = 0; j < terrainDepth; j++ ) {
+            for ( var i = 0; i < terrainWidth; i++ ) {
+
+                // write 32-bit float data to memory
+                Ammo.HEAPF32[ ammoHeightData + p2 >> 2 ] = heightData[ p ];
+
+                p++;
+
+                // 4 bytes/float
+                p2 += 4;
+            }
+        }
+
+        // Creates the heightfield physics shape
+        var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
+                terrainWidth,
+                terrainDepth,
+                ammoHeightData,
+                heightScale,
+                terrainMinHeight,
+                terrainMaxHeight,
+                upAxis,
+                hdt,
+                flipQuadEdges
+        );
+
+        // Set horizontal scale
+        var scaleX = terrainWidthExtents / ( terrainWidth - 1 );
+        var scaleZ = terrainDepthExtents / ( terrainDepth - 1 );
+        heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
+
+        heightFieldShape.setMargin( 0.05 );
+
+        return heightFieldShape;
+
+    }
+
+    function createRigidBody(threeObject, physicsShape, mass, pos, quat,x) {
+        threeObject.position.copy(pos);
+        threeObject.quaternion.copy(quat);
+
+        var transform = new Ammo.btTransform();
+        transform.setIdentity();
+        transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+        transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+        var motionState = new Ammo.btDefaultMotionState(transform);
+
+        var localInertia = new Ammo.btVector3(0, 0, 0);
+        physicsShape.calculateLocalInertia(mass, localInertia);
+
+        var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, physicsShape, localInertia);
+        var body = new Ammo.btRigidBody(rbInfo);
+
+        threeObject.userData.physicsBody = body;
+
+        if(x==1)
+        	scene.add(threeObject);
+
+        if (mass > 0) {
+            rigidBodies.push(threeObject);
+
+            // Disable deactivation
+            // 防止物体弹力过快消失
+
+            // Ammo.DISABLE_DEACTIVATION = 4
+            body.setActivationState(4);
+        }
+
+        physicsWorld.addRigidBody(body);
+
+        return body;
+    }
+
+     function initInput() {
+
+     	// 鼠标输入相关
+	    var mouseCoords = new THREE.Vector2();
+	    var raycaster = new THREE.Raycaster();
+	    var ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } );
+
+        window.addEventListener( 'mousedown', function( event ) {
+
+            mouseCoords.set(
+                    ( event.clientX / window.innerWidth ) * 2 - 1,
+                    - ( event.clientY / window.innerHeight ) * 2 + 1
+            );
+
+            raycaster.setFromCamera( mouseCoords, camera );
+
+            // Creates a ball and throws it
+            var ballMass = 35;
+            var ballRadius = 0.4;
+
+            var ball = new THREE.Mesh( new THREE.SphereGeometry( ballRadius, 14, 10 ), ballMaterial );
+            ball.castShadow = true;
+            ball.receiveShadow = true;
+            var ballShape = new Ammo.btSphereShape( ballRadius );
+            ballShape.setMargin( margin );
+            var pos = new THREE.Vector3();
+            var quat = new THREE.Quaternion();
+            pos.copy( raycaster.ray.direction );
+            pos.add( raycaster.ray.origin );
+            quat.set( 0, 0, 0, 1 );
+            var ballBody = createRigidBody( ball, ballShape, ballMass, pos, quat , 1);
+
+            pos.copy( raycaster.ray.direction );
+            pos.multiplyScalar( 24 );
+            ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+
+        }, false );
+
+    }
+
+    function initPhysicsScene(){
+
+    	initPhysics();
+
+    	var pos = new THREE.Vector3();
+        var quat = new THREE.Quaternion();
+        quat.set(0, 0, 0, 1);
+        heightData = generateHeight(terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight);
+        var shape = null;
+        var mass = 5; // 体积越大质量越大
+
+    	scene.traverse( function ( sceneChild ) {
+
+            if(sceneChild.type == 'Mesh'){
+            	if(sceneChild.geometry.type == 'PlaneBufferGeometry'){
+            		sceneChild.receiveShadow = true;
+            		sceneChild.castShadow = true;
+
+            		var vertices = sceneChild.geometry.attributes.position.array;
+            		heightData = generateHeight(127, 127, -1, 1);
+            		for ( var i = 0, j = 0, l = vertices.length; i < l; i++, j += 3 ) {
+				            // j + 1 because it is the y component that we modify
+				            vertices[ j + 1 ] = heightData[ i ];
+
+				        }
+
+				    sceneChild.geometry.computeVertexNormals();
+				    // 物理计算用
+			        var groundShape = createTerrainShape(heightData);
+			        var groundTransform = new Ammo.btTransform();
+			        groundTransform.setIdentity();
+			        // 设置bullet计算时物体中心
+			        groundTransform.setOrigin(new Ammo.btVector3( 0, ( terrainMaxHeight + terrainMinHeight ) / 2, 0 ));
+			        var groundMass = 0;
+			        var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
+			        var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
+			        var groundBody = new Ammo.btRigidBody(new Ammo.btRigidBodyConstructionInfo(groundMass, groundMotionState, groundShape, groundLocalInertia));
+			        physicsWorld.addRigidBody(groundBody);
+
+            	}
+
+                else if(sceneChild.geometry.type == 'BoxBufferGeometry'){
+                    shape = new Ammo.btBoxShape( new Ammo.btVector3( sceneChild.width * 0.5, sceneChild.height * 0.5, sceneChild.depth * 0.5 ) );
+                	shape.setMargin( margin );
+                }
+
+                else if(sceneChild.geometry.type == 'SphereBufferGeometry'){
+                	shape = new Ammo.btSphereShape( sceneChild.radius );
+                	shape.setMargin( margin );
+                }
+                else if(sceneChild.geometry.type == 'CylinderBufferGeometry' && sceneChild.radiusTop == sceneChild.radiusBottom){
+                	shape = new Ammo.btCylinderShape( new Ammo.btVector3( sceneChild.radiusTop, sceneChild.height * 0.5, sceneChild.radius ) );
+                	shape.setMargin(margin);
+                }
+
+                else if(sceneChild.geometry.type == 'CylinderBufferGeometry' && sceneChild.radiusTop == 0){
+                	shape = new Ammo.btConeShape( sceneChild.radiusBottom, sceneChild.height );
+                	shape.setMargin(margin);
+                }
+                else{
+
+                }
+
+                pos = sceneChild.position;
+        		createRigidBody(sceneChild, shape, mass, pos, quat,0);
+            }
+
+        } );
+
+        initInput();
+
+    }
+
+    signals.enablePhysics.add(initPhysicsScene);
 
 	var objects = [];
 
-	//
 
 	var vrEffect, vrControls;
 
@@ -769,11 +1085,9 @@ function dragMatFun(){
 
 	} );
 
-	signals.Postprocess.add( function () {
-
+	signals.Postprocess.add(function (){
 		render();
-
-	} );
+	})
 
 	//
 
@@ -816,10 +1130,10 @@ function dragMatFun(){
 
 		sceneHelpers.updateMatrixWorld();
 		scene.updateMatrixWorld();
-
+		//通道不能放在render里面
 		if( editor.SSAOpostprocessing == true){
 
-			initSSAOPostprocessing();
+			//initSSAOPostprocessing();
 			// Render depth into depthRenderTarget
 			scene.overrideMaterial = depthMaterial;//如果不为空，它将迫使在场景中的一切对象都使用该材料进行渲染。默认为空（null）。
 			renderer.render( scene, camera, depthRenderTarget, true );
@@ -835,7 +1149,7 @@ function dragMatFun(){
 
 		if(editor.SAOpostprocessing == true){
 
-			initSAOPostprocessing();
+			//initSAOPostprocessing();
 			effectComposer.render();
 			effectComposer.render( sceneHelpers, camera );
 
@@ -844,7 +1158,7 @@ function dragMatFun(){
 
 		if(editor.BLOOMpostprocessing == true){
 
-			initBLOOMPostprocessing();
+			//initBLOOMPostprocessing();
 			effectComposer.render();
 			effectComposer.render( sceneHelpers, camera );
 
@@ -853,11 +1167,25 @@ function dragMatFun(){
 
 		if(editor.SMAApostprocessing == true){
 
-			initSMAAPostprocessing();
+			//initSMAAPostprocessing();
 			effectComposer.render();
 			effectComposer.render( sceneHelpers, camera );
 
 			return;
+		}
+
+		if(editor.enablePhysics == true){
+
+			var deltaTime = clock.getDelta();
+
+	        updatePhysics(deltaTime);
+
+	        //controls.update(deltaTime);
+
+	        renderer.render(scene, camera);
+
+	        //time += deltaTime;
+
 		}
 
 

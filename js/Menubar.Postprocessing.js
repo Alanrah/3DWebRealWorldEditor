@@ -42,7 +42,7 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.BLOOMpostprocessing = false;
 		editor.SMAApostprocessing = false;
 
-		editor.signals.Postprocess.dispatch();
+		editor.signals.SSAOpostprocessing.dispatch();
 
 	} );
 	options.add( option );
@@ -60,7 +60,7 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.BLOOMpostprocessing = false;
 		editor.SMAApostprocessing = false;
 
-		editor.signals.Postprocess.dispatch();
+		editor.signals.SAOpostprocessing.dispatch();
 
 	} );
 	options.add( option );
@@ -96,7 +96,7 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.BLOOMpostprocessing = true;
 		editor.SMAApostprocessing = false;
 
-		editor.signals.Postprocess.dispatch();
+		editor.signals.BLOOMpostprocessing.dispatch();
 
 	} );
 	options.add( option );
@@ -111,10 +111,10 @@ Menubar.Postprocessing = function ( editor ) {
 		editor.SSAOpostprocessing = false;
 		editor.SAOpostprocessing = false;
 		editor.HDRpostprocessing = false;
-		editor.BLOOMpostprocessing = true;
-		editor.SMAApostprocessing = false;
+		editor.BLOOMpostprocessing = false;
+		editor.SMAApostprocessing = true;
 
-		editor.signals.Postprocess.dispatch();
+		editor.signals.SMAApostprocessing.dispatch();
 
 	} );
 	options.add( option );

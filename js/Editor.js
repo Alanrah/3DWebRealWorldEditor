@@ -85,7 +85,15 @@ var Editor = function () {
 		RenderEverywhere:  new Signal(),
 
 		StageGrid: new Signal(),
-		ShowFog: new Signal()
+		ShowFog: new Signal(),
+
+		SSAOpostprocessing: new Signal(),
+		SAOpostprocessing: new Signal(),
+		HDRpostprocessing: new Signal(),
+		BLOOMpostprocessing: new Signal(),
+		SMAApostprocessing: new Signal(),
+
+		enablePhysics: new Signal()
 
 	};
 
@@ -116,6 +124,7 @@ var Editor = function () {
 	this.HDRpostprocessing = false;
 	this.BLOOMpostprocessing = false;
 	this.SMAApostprocessing = false;
+	this.enablePhysics = false;
 
 };
 

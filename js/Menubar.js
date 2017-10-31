@@ -16,12 +16,18 @@ var Menubar = function ( editor ) {
 	container.add( new Menubar.Examples( editor ) );
 	container.add( new Menubar.Postprocessing( editor ) );
 	container.add( new Menubar.Stage( editor ) );
+	container.add( new Menubar.Physics( editor ) );
 	container.add( new Menubar.Help( editor ) );
 	container.add( new Menubar.Status( editor ) );
 
 	var ahref = new UI.A();
 	ahref.dom.innerText = 'ModelLibrary';
 	ahref.dom.href = "models/index.php" ;
+
+	var ahref = new UI.A();
+	ahref.dom.innerText = 'Physics';
+	ahref.dom.innerText = 'PhysicsDemo';
+	ahref.dom.href = "ammojs/index.html" ;
 
 	var title = new UI.Panel();
 	title.setClass( 'title' );
