@@ -6,7 +6,8 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
 			body {
-				background-color: #000000;
+				background: url("IT/background.png");
+				background-size :100% 100%;
 				margin: 0px;
 				overflow: hidden;
 				font-family:Monospace;
@@ -146,7 +147,7 @@
 				var width = window.innerWidth;
 				var height = window.innerHeight;
 
-				renderer = new THREE.WebGLRenderer( { antialias: false } );
+				renderer = new THREE.WebGLRenderer( { antialias: false ,alpha :true } );
 				renderer.shadowMap.enabled = true;
 				// todo - support pixelRatio in this demo
 				renderer.setSize( width, height );

@@ -21,17 +21,17 @@ var Menubar = function ( editor ) {
 	container.add( new Menubar.Status( editor ) );
 
 	var ahref = new UI.A();
-	ahref.dom.innerText = 'ModelLibrary';
+	ahref.dom.innerText = 'ModelLibrary  ';
 	ahref.dom.href = "models/index.php" ;
-
-	var ahref = new UI.A();
-	ahref.dom.innerText = 'Physics';
-	ahref.dom.innerText = 'PhysicsDemo';
-	ahref.dom.href = "ammojs/index.html" ;
-
 	var title = new UI.Panel();
 	title.setClass( 'title' );
 	title.add( ahref );
+	var ahref = new UI.A();
+	ahref.dom.innerText = 'Physics';
+	ahref.dom.innerText = '  PhysicsDemo';
+	ahref.dom.href = "ammojs-learn/index.html" ;
+	title.add( ahref );
+	
 
 	var containe = new UI.Panel();
 	containe.setClass( 'menu' );
