@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - post processing - Outline Pass</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background: url("IT/background.png");
+				background-size :100% 100%;
+				margin: 0px;
+				overflow: hidden;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		<script src="../build/three.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+			var camera, scene, renderer, controls;
+			var raycaster = new THREE.Raycaster();
+
+			var mouse = new THREE.Vector2();
+
+			var geometry = new THREE.Geometry();//存放线条的vertices
+			var geometryChange = new THREE.Geometry();//存放当前选中物体相关线条的vertices
+
+			var lineGroup = new THREE.Group();//存放动态线条（柱子）
+    		lineGroup.name='lineGroup';
+
+			var composer, effectFXAA, outlinePass;
+			var obj3d = new THREE.Object3D();
+
+			var group = new THREE.Group();
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				renderer = new THREE.WebGLRenderer( { antialias: false ,alpha :true } );
+				renderer.shadowMap.enabled = true;
+				renderer.setSize( width, height );
+				document.body.appendChild( renderer.domElement );
+
+				scene = new THREE.Scene();
+				scene.add(group);
+
+				var pl1h=-6;//各个plane层次高度
+				var pl2h=0;
+				var pl3h=6;
+				var opacity =0.7;
+				var transparent=true;
+
+				var loader = new THREE.TextureLoader();
+
+				loader.load(
+
+					'IT/first.png',
+					function ( texture ) {
+
+						var material = new THREE.MeshStandardMaterial( {
+							side: THREE.DoubleSide,
+							map: texture
+						 } );
+						material.opacity = opacity;
+						material.transparent = transparent; 
+						var geometry = new THREE.PlaneBufferGeometry( 20, 10, 3.98 );
+						var plane1 = new THREE.Mesh( geometry, material );
+						plane1.rotateX(-Math.PI/2);
+						plane1.position.set(0,pl1h,0);
+                        plane1.receiveShadow=true;
+						scene.add( plane1 );
+					},
+
+					function ( xhr ) {
+						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+					},
+
+					function ( xhr ) {
+						console.log( 'An error happened' );
+					}
+				);
+
+				loader.load(
+
+					'IT/second.png',
+
+					function ( texture ) {
+
+						var material = new THREE.MeshStandardMaterial( {
+							side: THREE.DoubleSide,
+							map: texture
+						 } );
+						material.opacity = opacity;
+						material.transparent = transparent; 
+						var geometry = new THREE.PlaneBufferGeometry( 20, 10, 3.98 );
+						var plane1 = new THREE.Mesh( geometry, material );
+						plane1.rotateX(-Math.PI/2);
+						plane1.position.set(0,pl2h,0);
+                        plane1.receiveShadow=true;
+						scene.add( plane1 );
+					},
+
+					function ( xhr ) {
+						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+					},
+
+					function ( xhr ) {
+						console.log( 'An error happened' );
+					}
+				);
+
+				loader.load(
+
+					'IT/third.png',
+
+					function ( texture ) {
+
+						var material = new THREE.MeshStandardMaterial( {
+							side: THREE.DoubleSide,
+							map: texture
+						 } );
+						material.opacity = opacity;
+						material.transparent = transparent; 
+						var geometry = new THREE.PlaneBufferGeometry( 20, 10, 3.98 );
+						var plane1 = new THREE.Mesh( geometry, material );
+						plane1.rotateX(-Math.PI/2);
+						plane1.position.set(0,pl3h,0);
+                        plane1.receiveShadow=true;
+						scene.add( plane1 );
+					},
+					function ( xhr ) {
+						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+					},
+
+					function ( xhr ) {
+						console.log( 'An error happened' );
+					}
+				);
+
+				var bluematerial = new THREE.MeshPhongMaterial( {color: 0x66ffff,emissive:0x66ffff} );
+				var yellowmaterial = new THREE.MeshPhongMaterial( {color: 0xFF9900} );
+				var whitematerial = new THREE.MeshPhongMaterial( {color: 0xffdfc5} );
+
+				var geometry2 = new THREE.BoxBufferGeometry( 1, 2, 1 );
+				var geometry1 = new THREE.BoxBufferGeometry( 1, 1, 1 );
+
+				var box1 = new THREE.Mesh( geometry1, whitematerial );
+				box1.position.set(-5.6,pl1h+0.6,-3);
+                box1.castShadow=true;
+				group.add( box1 );
+				geometry.vertices.push(box1.position);
+				
+				var box2 = new THREE.Mesh( geometry2, bluematerial );
+				box2.position.set(-5.8,pl1h+1.1,-0.9);
+                box2.castShadow=true;
+				group.add( box2 );
+				geometry.vertices.push(box2.position);
+
+				var box3 = new THREE.Mesh( geometry2, bluematerial );
+				box3.position.set(-5.6,pl1h+1.1,1.4);
+                box3.castShadow=true;
+				group.add( box3 );
+				geometry.vertices.push(box3.position);
+
+				var box4 = new THREE.Mesh( geometry1, whitematerial );
+				box4.position.set(-1.8,pl1h+0.6,-2.1);
+                box4.castShadow=true;
+				group.add( box4 );
+				geometry.vertices.push(box4.position);
+
+				var box5 = new THREE.Mesh( geometry1, whitematerial );
+				box5.position.set(-1.8,pl1h+0.6,0);
+                box5.castShadow=true;
+				group.add( box5 );
+				geometry.vertices.push(box5.position);
+
+				var box6 = new THREE.Mesh( geometry2, bluematerial );
+				box6.position.set(2,pl1h+1.1,-3);
+                box6.castShadow=true;
+				group.add( box6 );
+				geometry.vertices.push(box6.position);
+
+				var box7 = new THREE.Mesh( geometry2, yellowmaterial );
+				box7.position.set(3,pl1h+1.1,-1);
+                box7.castShadow=true;
+				group.add( box7 );
+				geometry.vertices.push(box7.position);
+
+				var box8 = new THREE.Mesh( geometry2, yellowmaterial );
+				box8.position.set(2.7,pl1h+1.1,2);
+                box8.castShadow=true;
+				group.add( box8 );
+				geometry.vertices.push(box8.position);
+
+				var box9 = new THREE.Mesh( geometry2, bluematerial );
+				box9.position.set(6.7,pl1h+1.1,-3);
+                box9.castShadow=true;
+				group.add( box9 );
+				geometry.vertices.push(box9.position);
+
+				var box10 = new THREE.Mesh( geometry2, yellowmaterial );
+				box10.position.set(5.5,pl1h+1.1,0.5);
+                box10.castShadow=true;
+				group.add( box10 );
+				geometry.vertices.push(box10.position);
+
+				var box11 = new THREE.Mesh( geometry2, yellowmaterial );
+				box11.position.set(7.4,pl1h+1.1,2.2);
+                box11.castShadow=true;
+				group.add( box11 );
+				geometry.vertices.push(box11.position);
+
+
+				var box12 = new THREE.Mesh( geometry1, whitematerial );
+				box12.position.set(3.6,pl2h+0.6,-0.4);
+                box12.castShadow=true;
+				group.add( box12 );
+
+				var box13 = new THREE.Mesh( geometry1, whitematerial );
+				box13.position.set(3.6,pl2h+.6,1.5);
+                box13.castShadow=true;
+				group.add( box13 );
+
+				var box14 = new THREE.Mesh( geometry1, whitematerial );
+				box14.position.set(7,pl2h+.6,-0.4);
+                box14.castShadow=true;
+				group.add( box14 );
+
+				var box15 = new THREE.Mesh( geometry1, whitematerial );
+				box15.position.set(7,pl2h+.6,1.5);
+                box15.castShadow=true;
+				group.add( box15 );
+
+				var box16 = new THREE.Mesh( geometry2, yellowmaterial );
+				box16.position.set(4.5,pl3h+1.1,0.4);
+                box16.castShadow=true;
+				group.add( box16 );
+
+				var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( -18, 9, -5 );
+                scene.add( light );
+
+                var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( 16, 9, -15 );
+                scene.add( light );
+
+                var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( 10, 15, -5 );
+                scene.add( light );
+
+                var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( -10, 15, -15 );
+                scene.add( light );
+
+                var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( 15, 15, 15 );
+                scene.add( light );
+
+                var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( 0, -20, 0 );
+                scene.add( light );
+
+                var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+                scene.add( light );
+
+				camera = new THREE.PerspectiveCamera( 45, width / height, 1, 10000 );
+				camera.position.set( 7, 23, 20 );
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 2;
+				controls.maxDistance = 30;
+				controls.enablePan = false;
+                controls.zoomSpeed = 1.0;
+                controls.panSpeed = 1.0;
+				controls.enableDamping = true;
+				controls.dampingFactor = 0.25;
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				window.addEventListener( 'mousemove', onTouchMove );
+				window.addEventListener( 'touchmove', onTouchMove );
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				
+				function onDocumentMouseDown( event ) {
+
+			        event.preventDefault();
+			        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+			        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+			        raycaster.setFromCamera( mouse, camera );
+			        var intersects = raycaster.intersectObjects( [group], true );
+			         //只重画当前选中部分的线条，删除则显示所有选中部分的线条
+			        scene.traverse( function ( sceneChild ) {
+			            if ( sceneChild.name === 'lineGroup' ) {
+			            sceneChild.children = new Array();
+			            scene.remove(sceneChild);
+			            }
+			        } );
+			        
+			        if ( intersects.length > 0 && (intersects[0].object.geometry.type== 'BoxBufferGeometry' ) ) {
+			        	if (intersects[0].object.position.y<=(pl1h+1.1)) {
+				            var object = intersects[0].object;
+				            geometryChange = new THREE.Geometry();
+				            var position = intersects[0].object.position;
+				            //搜索 geometry.vertices 中的 position 重新绘制选中物体相关linet
+				            var p = geometry.vertices.length;
+				            for(i=0;i<p;i++){
+				                if(geometry.vertices[i] == position){
+
+				                    if (i == p - 1){
+				                        geometryChange.vertices.push(geometry.vertices[p - 2]);
+				                        geometryChange.vertices.push(position);
+				                    }
+				                    else if(i == 0){
+				                        geometryChange.vertices.push(position);
+				                        geometryChange.vertices.push(geometry.vertices[i+1]);
+				                    }
+
+				                    else{
+				                        geometryChange.vertices.push(geometry.vertices[i-1]);
+				                        geometryChange.vertices.push(position);
+				                        geometryChange.vertices.push(geometry.vertices[i+1]);
+				                      
+				                    }
+				                }
+				            }
+				            var temp = geometryChange.vertices.length;
+				            var xyz = geometryChange.vertices;
+				            var material = new THREE.MeshPhongMaterial( {
+											color: 0x156289,
+											emissive: 0x00FFFF,
+											side: THREE.DoubleSide,
+											shading: THREE.FlatShading,
+											vertexColors:THREE.FaceColors
+										} );
+				            var x,y,z,xw,zh,cheight;//position(x,y,z),xw是长，y是高，zh
+				            for(i=0;i<temp-1;i++){
+				            	x= (xyz[i].x+xyz[i+1].x)/2;
+				            	y=-5.9;
+				            	z=(xyz[i].z+xyz[i+1].z)/2;
+				            	xw=xyz[i].x-xyz[i+1].x;
+				            	zh=xyz[i].z-xyz[i+1].z;
+				            	cheight=Math.sqrt(xw*xw+zh*zh);//圆柱体长度
+				            	var geometryCylinderLine = new THREE.CylinderBufferGeometry( 0.02, 0.02, cheight,20 );
+				            	var cylinder = new THREE.Mesh( geometryCylinderLine, material );
+				            	cylinder.position.set( x, y, z );//两实体的中点
+				            	cylinder.rotation.x -= Math.PI * 0.5;
+				            	//考虑到局部坐标系和全局坐标系的转换，柱体是在全局坐标系下旋转
+				            	if(xyz[i].x > xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+				            		cylinder.rotation.z -= Math.asin(xw/cheight);//Math.asin(xw/cheight)为柱体要旋转的角度
+				            	else if(xyz[i].x > xyz[i+1].x && xyz[i].z > xyz[i+1].z)
+				            		cylinder.rotation.z += Math.asin(xw/cheight);
+				            	else if(xyz[i].x < xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+				            		cylinder.rotation.z -= Math.asin(xw/cheight);
+				            	else
+				            		cylinder.rotation.z += Math.asin(xw/cheight);
+
+				            	cylinder.castShadow = true;
+				            	cylinder.receiveShadow = true;
+
+				            	lineGroup.add( cylinder );
+				            }
+
+				            loader.load(
+								'IT/word2.png',
+								function ( texture ) {
+									var material = new THREE.MeshPhongMaterial( {
+										side: THREE.DoubleSide,
+										map: texture
+									 } );
+									material.opacity = 0.8;
+									material.transparent = true;
+									var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
+									var plane1 = new THREE.Mesh( geometry, material );
+									plane1.position.set(15,pl1h+3,0);
+									lineGroup.add( plane1 );
+									var lmaterial = new THREE.LineBasicMaterial({
+										color: 0x66ffff
+										});
+									var lgeometry = new THREE.Geometry();
+									lgeometry.vertices.push(new THREE.Vector3( 13,pl1h+3,0 ),
+															new THREE.Vector3( 10,pl1h+3,0 ),
+															intersects[0].object.position);
+									var line = new THREE.Line(lgeometry,lmaterial);
+									lineGroup.add(line);
+								},
+								function ( xhr ) {
+									console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+								},
+								function ( xhr ) {
+									console.log( 'An error happened' );
+								}
+							);
+	            			
+				        }
+				       //最底层连线
+				       else if (intersects[0].object.position.y<=(pl2h+1.1) && intersects[0].object.position.y>(pl1h+1.1)) {
+				       		var lmaterial = new THREE.LineBasicMaterial({
+								color: 0x66ffff
+								});
+					
+							for(i=1;i<=11;i++){
+								var lgeometry = new THREE.Geometry();
+								lgeometry.vertices.push(intersects[0].object.position,geometry.vertices[i-1]);
+								var line = new THREE.Line(lgeometry,lmaterial);
+								lineGroup.add(line);
+							}
+
+							loader.load(
+
+								'IT/word2.png',
+								function ( texture ) {
+									var material = new THREE.MeshPhongMaterial( {
+										side: THREE.DoubleSide,
+										map: texture
+									 } );
+									material.opacity = 0.8;
+									material.transparent = true;
+									var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
+									var plane1 = new THREE.Mesh( geometry, material );
+									plane1.position.set(15,pl2h+3,0);
+									lineGroup.add( plane1 );
+									var lmaterial = new THREE.LineBasicMaterial({
+										color: 0x66ffff
+										});
+									var lgeometry = new THREE.Geometry();
+									lgeometry.vertices.push(new THREE.Vector3( 13,pl2h+3,0 ),
+															new THREE.Vector3( 10,pl2h+3,0 ),
+															intersects[0].object.position);
+									var line = new THREE.Line(lgeometry,lmaterial);
+									lineGroup.add(line);	
+								},
+								function ( xhr ) {
+									console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+								},
+								function ( xhr ) {
+									console.log( 'An error happened' );
+								}
+							);
+				       }
+
+				       else{
+				       		var xma = new THREE.LineBasicMaterial({
+								color: 0xffdfc5
+								});
+							var lgeometry = new THREE.Geometry();
+							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 7,pl2h+.5,1.5 ));
+							var line = new THREE.Line(lgeometry,xma);
+							lineGroup.add(line);
+							var lgeometry = new THREE.Geometry();
+							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 7,pl2h+.5,-0.4 ));
+							var line = new THREE.Line(lgeometry,xma);
+							lineGroup.add(line);
+							var lgeometry = new THREE.Geometry();
+							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 3.6,pl2h+.5,1.5 ));
+							var line = new THREE.Line(lgeometry,xma);
+							lineGroup.add(line);
+							var lgeometry = new THREE.Geometry();
+							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 3.6,pl2h+.5,-0.4 ));
+							var line = new THREE.Line(lgeometry,xma);
+							lineGroup.add(line);
+
+							loader.load(
+								'IT/word1.png',
+								function ( texture ) {
+									var material = new THREE.MeshPhongMaterial( {
+										side: THREE.DoubleSide,
+										map: texture
+									 } );
+									material.opacity = 0.8;
+									material.transparent = true;
+									var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
+									var plane1 = new THREE.Mesh( geometry, material );
+									plane1.position.set(15,pl3h+3,0);
+									lineGroup.add( plane1 );
+									var lmaterial = new THREE.LineBasicMaterial({
+										color: 0x66ffff
+										});
+									var lgeometry = new THREE.Geometry();
+									lgeometry.vertices.push(new THREE.Vector3( 13,pl3h+3,0 ),
+															new THREE.Vector3( 10,pl3h+3,0 ),
+															intersects[0].object.position);
+									var line = new THREE.Line(lgeometry,lmaterial);
+									lineGroup.add(line);
+
+								},
+								function ( xhr ) {
+									console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+								},
+								function ( xhr ) {
+									console.log( 'An error happened' );
+								}
+							);
+				       }
+
+				       scene.add( lineGroup );
+
+					   }
+                    }
+				function onTouchMove( event ) {
+
+					var x, y;
+
+					if ( event.changedTouches ) {
+
+						x = event.changedTouches[ 0 ].pageX;
+						y = event.changedTouches[ 0 ].pageY;
+
+					} else {
+
+						x = event.clientX;
+						y = event.clientY;
+
+					}
+
+					mouse.x = ( x / window.innerWidth ) * 2 - 1;
+					mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
+					checkIntersection();
+
+				}
+
+				function checkIntersection() {
+
+					raycaster.setFromCamera( mouse, camera );
+
+					var intersects = raycaster.intersectObjects( [group], true );
+
+					if ( intersects.length > 0 ) {
+
+						var selectedObject = intersects[ 0 ].object;
+
+					} 
+				}
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+			
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				stats.begin();
+
+				controls.update();
+
+				render();
+
+				stats.end();
+
+			}
+            function render(){
+                renderer.render( scene, camera );
+            }
+
+		</script>
+	</body>
+</html>

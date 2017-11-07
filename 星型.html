@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>three.js webgl - post processing - Outline Pass</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                background: url("IT/background.png");
+                background-size :100% 100%;
+                margin: 0px;
+                overflow: hidden;
+                font-family:Monospace;
+                font-size:13px;
+                text-align:center;
+                font-weight: bold;
+            }
+
+            a {
+                color:#00ff78;
+            }
+
+            #info {
+                color: #fff;
+                position: absolute;
+                top: 10px;
+                width: 100%;
+                text-align: center;
+                display:block;
+            }
+            .dg.ac {
+                z-index: 1 !important; /* FIX DAT.GUI */
+            }
+        </style>
+    </head>
+    <body>
+        <script src="../build/three.js"></script>
+        <script src="js/controls/OrbitControls.js"></script>
+        <script src="js/loaders/OBJLoader.js"></script>
+    
+        <script src="js/Detector.js"></script>
+
+        <script src="js/shaders/CopyShader.js"></script>
+        <script src="js/shaders/FXAAShader.js"></script>
+        <script src="js/postprocessing/EffectComposer.js"></script>
+        <script src="js/postprocessing/RenderPass.js"></script>
+        <script src="js/postprocessing/ShaderPass.js"></script>
+        <script src="js/postprocessing/OutlinePass.js"></script>
+        <script src="js/libs/stats.min.js"></script>
+        <script src='js/libs/dat.gui.min.js'></script>
+        <script>
+
+            if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+            var container, stats;
+            var camera, scene, renderer, controls;
+            var raycaster = new THREE.Raycaster();
+
+            var mouse = new THREE.Vector2();
+            var selectedObjects = [];
+
+            var geometry = new THREE.Geometry();//存放线条的vertices
+            var Fgeometry = new THREE.Geometry();
+            var Sgeometry = new THREE.Geometry();
+
+            var geometryChange = new THREE.Geometry();//存放当前选中物体相关线条的vertices
+
+            var lineGroup = new THREE.Group();//存放动态线条（柱子）
+            lineGroup.name='lineGroup';
+
+            var composer, effectFXAA, outlinePass;
+            var obj3d = new THREE.Object3D();
+
+            var group = new THREE.Group();
+
+            var params = {
+                edgeStrength: 3.0,
+                edgeGlow: 0.0,
+                edgeThickness: 1.0,
+                pulsePeriod: 0,
+                rotate: false,
+                usePatternTexture: false
+            };
+
+            // Init gui
+
+            var gui = new dat.GUI( { width: 300 } );
+
+            gui.add( params, 'edgeStrength', 0.01, 10 ).onChange( function ( value ) {
+
+                outlinePass.edgeStrength = Number( value );
+
+            } );
+
+            gui.add( params, 'edgeGlow', 0.0, 1 ).onChange( function ( value ) {
+
+                outlinePass.edgeGlow = Number( value );
+
+            } );
+
+            gui.add( params, 'edgeThickness', 1, 4 ).onChange( function ( value ) {
+
+                outlinePass.edgeThickness = Number( value );
+
+            } );
+
+            gui.add( params, 'pulsePeriod', 0.0, 5 ).onChange( function ( value ) {
+
+                outlinePass.pulsePeriod = Number( value );
+
+            } );
+
+            gui.add( params, 'rotate' );
+
+            gui.add( params, 'usePatternTexture' ).onChange( function ( value ) {
+
+                outlinePass.usePatternTexture = value;
+
+            } );
+
+            var Configuration = function () {
+
+                this.visibleEdgeColor = '#ffffff';
+                this.hiddenEdgeColor = '#190a05';
+
+            };
+
+            var conf = new Configuration();
+
+            var controllerVisible = gui.addColor( conf, 'visibleEdgeColor' ).onChange( function ( value ) {
+
+                outlinePass.visibleEdgeColor.set( value );
+
+            } );
+
+            var controllerHidden = gui.addColor( conf, 'hiddenEdgeColor' ).onChange( function ( value ) {
+
+                outlinePass.hiddenEdgeColor.set( value );
+
+            } );
+
+            init();
+            animate();
+
+            function init() {
+
+                container = document.createElement( 'div' );
+                document.body.appendChild( container );
+
+                var width = window.innerWidth;
+                var height = window.innerHeight;
+
+                renderer = new THREE.WebGLRenderer( { antialias: false ,alpha :true } );
+                renderer.shadowMap.enabled = true;
+                // todo - support pixelRatio in this demo
+                renderer.setSize( width, height );
+                document.body.appendChild( renderer.domElement );
+
+                scene = new THREE.Scene();
+                scene.add(group);
+
+                var pl1h=0;//各个plane层次高度
+                var pl2h=0;
+                var pl3h=6;
+                var opacity =0.7;
+                var transparent=true;
+
+                var loader = new THREE.TextureLoader();
+
+                loader.load(
+
+                    'IT/底图.png',
+ 
+                    function ( texture ) {
+                        // do something with the texture
+                        var material = new THREE.MeshPhongMaterial( {
+                            side: THREE.DoubleSide,
+                            map: texture
+                         } );
+                        material.opacity = opacity;
+                        material.transparent = transparent; 
+                        var geometry = new THREE.PlaneBufferGeometry( 20, 10, 3.98 );
+                        var plane1 = new THREE.Mesh( geometry, material );
+                        plane1.rotateX(-Math.PI/2);
+                        plane1.position.set(0,pl1h,0);
+                        scene.add( plane1 );
+                    },
+                );
+
+                var bluematerial = new THREE.MeshPhongMaterial( {color: 0x66ffff} );
+                var yellowmaterial = new THREE.MeshPhongMaterial( {color: 0xFF9900} );
+                var whitematerial = new THREE.MeshPhongMaterial( {color: 0xffdfc5} );
+
+                var geometry2 = new THREE.SphereBufferGeometry( 0.25, 32, 32 );
+                var geometry1 = new THREE.BoxBufferGeometry( 0.5, 0.5, 0.5 );
+
+                var box1 = new THREE.Mesh( geometry1, whitematerial );
+                box1.position.set(0,pl1h+0.25,-1);
+                group.add( box1 );
+                geometry.vertices.push(box1.position);
+
+                
+                var box2 = new THREE.Mesh( geometry1, whitematerial );
+                box2.position.set(1,pl1h+0.25,1);
+                group.add( box2 );
+                geometry.vertices.push(box2.position);
+
+                var sphere3 = new THREE.Mesh( geometry2, yellowmaterial );
+                sphere3.position.set(2,pl1h+0.25,3);
+                group.add( sphere3 );
+                Fgeometry.vertices.push(sphere3.position);
+
+                var sphere4 = new THREE.Mesh( geometry2, yellowmaterial );
+                sphere4.position.set(-1.8,pl1h+0.25,-2.1);
+                group.add( sphere4 );
+                Fgeometry.vertices.push(sphere4.position);
+
+                var sphere5 = new THREE.Mesh( geometry2, yellowmaterial );
+                sphere5.position.set(-1.8,pl1h+0.25,0);
+                group.add( sphere5 );
+               Fgeometry.vertices.push(sphere5.position);
+
+                var sphere6 = new THREE.Mesh( geometry2, yellowmaterial );
+                sphere6.position.set(2,pl1h+0.25,-3);
+                group.add( sphere6 );
+                Fgeometry.vertices.push(sphere6.position);
+
+                var sphere7 = new THREE.Mesh( geometry2, yellowmaterial );
+                sphere7.position.set(3,pl1h+0.25,-1);
+                group.add( sphere7 );
+                Fgeometry.vertices.push(sphere7.position);
+
+                var sphere8 = new THREE.Mesh( geometry2, bluematerial );
+                sphere8.position.set(-7,pl1h+0.25,2);
+                group.add( sphere8 );
+                Sgeometry.vertices.push(sphere8.position);
+
+                var sphere9 = new THREE.Mesh( geometry2, bluematerial );
+                sphere9.position.set(-6.7,pl1h+0.25,-3);
+                group.add( sphere9 );
+                Sgeometry.vertices.push(sphere9.position);
+
+                var sphere10 = new THREE.Mesh( geometry2, bluematerial );
+                sphere10.position.set(-5.5,pl1h+0.25,0.5);
+                group.add( sphere10 );
+                Sgeometry.vertices.push(sphere10.position);
+
+                var sphere11 = new THREE.Mesh( geometry2, bluematerial );
+                sphere11.position.set(-4.4,pl1h+0.25,2.2);
+                group.add( sphere11 );
+                Sgeometry.vertices.push(sphere11.position);
+
+
+                var sphere12 = new THREE.Mesh( geometry2, bluematerial );
+                sphere12.position.set(-3.6,pl1h+0.25,-0.4);
+                group.add( sphere12 );
+                Sgeometry.vertices.push(sphere12.position);
+
+                var sphere13 = new THREE.Mesh( geometry2, bluematerial );
+                sphere13.position.set(3.6,pl1h+.25,1.5);
+                group.add( sphere13 );
+                Sgeometry.vertices.push(sphere13.position);
+
+                var sphere14 = new THREE.Mesh( geometry2, bluematerial );
+                sphere14.position.set(7,pl1h+.25,-0.4);
+                group.add( sphere14 );
+                Sgeometry.vertices.push(sphere14.position);
+
+                var sphere15 = new THREE.Mesh( geometry2, bluematerial );
+                sphere15.position.set(5,pl1h+.25,1.5);
+                group.add( sphere15 );
+                Sgeometry.vertices.push(sphere15.position);
+
+                var sphere16 = new THREE.Mesh( geometry2, bluematerial );
+                sphere16.position.set(4.5,pl1h+0.25,0.4);
+                group.add( sphere16 );
+                Sgeometry.vertices.push(sphere16.position);
+
+                var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( -8, 9, 0 );
+                scene.add( light );
+
+                light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( 16, 9, 15 );
+                scene.add( light );
+
+                var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( 5, 15, 0 );
+                scene.add( light );
+
+                var light = new THREE.PointLight( 0xffffff, 1, 100 );
+                light.position.set( -5, 15, 15 );
+                scene.add( light );
+
+
+                camera = new THREE.PerspectiveCamera( 45, width / height, 1, 10000 );
+                camera.position.set( 0, 20, 4 );
+
+                controls = new THREE.OrbitControls( camera, renderer.domElement );
+                controls.minDistance = 2;
+                //controls.maxDistance = 20;
+                //controls.enablePan = false;
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.25;
+
+                //
+                
+
+                stats = new Stats();
+                container.appendChild( stats.dom );
+
+                // postprocessing
+
+                composer = new THREE.EffectComposer( renderer );
+
+                var renderPass = new THREE.RenderPass( scene, camera );
+                composer.addPass( renderPass );
+
+                outlinePass = new THREE.OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
+                composer.addPass( outlinePass );
+
+                var onLoad = function ( texture ) {
+
+                    outlinePass.patternTexture = texture;
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+
+                };
+
+                var loader = new THREE.TextureLoader();
+
+                loader.load( 'tri_pattern.jpg', onLoad );
+
+                effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+                effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+                effectFXAA.renderToScreen = true;
+                composer.addPass( effectFXAA );
+
+                window.addEventListener( 'resize', onWindowResize, false );
+
+                window.addEventListener( 'mousemove', onTouchMove );
+                window.addEventListener( 'touchmove', onTouchMove );
+                document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+                
+                function onDocumentMouseDown( event ) {
+
+                    event.preventDefault();
+                    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+                    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+                    raycaster.setFromCamera( mouse, camera );
+                    var intersects = raycaster.intersectObjects( [group], true );
+                    //只重画当前选中部分的线条，删除则显示所有选中部分的线条
+                    
+                   if(intersects.length > 0){
+                        if(intersects[0].object.geometry.type== 'BoxBufferGeometry'){
+
+                            scene.traverse( function ( sceneChild ) {
+                                if ( sceneChild.name === 'lineGroup' ) {
+                                sceneChild.children = new Array();
+                                scene.remove(sceneChild);
+                                }
+                            } );
+                            var object = intersects[0].object;
+                            geometryChange = new THREE.Geometry();
+                            var position = intersects[0].object.position;
+                            //搜索 geometry.vertices 中的 position 重新绘制选中物体相关linet
+                            var p = geometry.vertices.length;
+                            for(i=0;i<Fgeometry.vertices.length;i++){
+                                 geometryChange.vertices.push(position);
+                                 geometryChange.vertices.push(Fgeometry.vertices[i]);
+                            }
+                            var temp = geometryChange.vertices.length;
+                            var xyz = geometryChange.vertices;
+                            var material = new THREE.MeshPhongMaterial( {
+                                            color: 0x156289,
+                                            emissive: 0x00FFFF,
+                                            side: THREE.DoubleSide,
+                                            shading: THREE.FlatShading,
+                                            vertexColors:THREE.FaceColors
+                                        } );
+                            var x,y,z,xw,zh,cheight;//position(x,y,z),xw是长，y是高，zh
+                            for(i=0;i<temp-1;i++){
+                                x= (xyz[i].x+xyz[i+1].x)/2;
+                                y=0.1;
+                                z=(xyz[i].z+xyz[i+1].z)/2;
+                                xw=xyz[i].x-xyz[i+1].x;
+                                zh=xyz[i].z-xyz[i+1].z;
+                                cheight=Math.sqrt(xw*xw+zh*zh);//圆柱体长度
+                                var geometryCylinderLine = new THREE.CylinderBufferGeometry( 0.02, 0.02, cheight,20 );
+                                var cylinder = new THREE.Mesh( geometryCylinderLine, material );
+                                cylinder.position.set( x, y, z );//两实体的中点
+                                cylinder.rotation.x -= Math.PI * 0.5;
+                                //考虑到局部坐标系和全局坐标系的转换，柱体是在全局坐标系下旋转
+                                if(xyz[i].x > xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+                                    cylinder.rotation.z -= Math.asin(xw/cheight);//Math.asin(xw/cheight)为柱体要旋转的角度
+                                else if(xyz[i].x > xyz[i+1].x && xyz[i].z > xyz[i+1].z)
+                                    cylinder.rotation.z += Math.asin(xw/cheight);
+                                else if(xyz[i].x < xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+                                    cylinder.rotation.z -= Math.asin(xw/cheight);
+                                else
+                                    cylinder.rotation.z += Math.asin(xw/cheight);
+
+                                cylinder.castShadow = true;
+                                cylinder.receiveShadow = true;
+                                
+                                lineGroup.add( cylinder );
+                            }
+                        }
+                    //黄色-第二层
+                    if(intersects[0].object.material == yellowmaterial){
+                        var object = intersects[0].object;
+                            geometryChange = new THREE.Geometry();
+                            var position = intersects[0].object.position;
+                            //搜索 geometry.vertices 中的 position 重新绘制选中物体相关linet
+                            var p = geometry.vertices.length;
+                            for(i=0;i<Sgeometry.vertices.length;i++){
+                                 geometryChange.vertices.push(position);
+                                 geometryChange.vertices.push(Sgeometry.vertices[i]);
+                            }
+                            var temp = geometryChange.vertices.length;
+                            var xyz = geometryChange.vertices;
+                            var material = new THREE.MeshPhongMaterial( {
+                                            color: 0x156289,
+                                            emissive: 0x00FFFF,
+                                            side: THREE.DoubleSide,
+                                            shading: THREE.FlatShading,
+                                            vertexColors:THREE.FaceColors
+                                        } );
+                            var x,y,z,xw,zh,cheight;//position(x,y,z),xw是长，y是高，zh
+                            for(i=0;i<temp-1;i++){
+                                x= (xyz[i].x+xyz[i+1].x)/2;
+                                y=0.1;
+                                z=(xyz[i].z+xyz[i+1].z)/2;
+                                xw=xyz[i].x-xyz[i+1].x;
+                                zh=xyz[i].z-xyz[i+1].z;
+                                cheight=Math.sqrt(xw*xw+zh*zh);//圆柱体长度
+                                var geometryCylinderLine = new THREE.CylinderBufferGeometry( 0.02, 0.02, cheight,20 );
+                                var cylinder = new THREE.Mesh( geometryCylinderLine, material );
+                                cylinder.position.set( x, y, z );//两实体的中点
+                                cylinder.rotation.x -= Math.PI * 0.5;
+                                //考虑到局部坐标系和全局坐标系的转换，柱体是在全局坐标系下旋转
+                                if(xyz[i].x > xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+                                    cylinder.rotation.z -= Math.asin(xw/cheight);//Math.asin(xw/cheight)为柱体要旋转的角度
+                                else if(xyz[i].x > xyz[i+1].x && xyz[i].z > xyz[i+1].z)
+                                    cylinder.rotation.z += Math.asin(xw/cheight);
+                                else if(xyz[i].x < xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+                                    cylinder.rotation.z -= Math.asin(xw/cheight);
+                                else
+                                    cylinder.rotation.z += Math.asin(xw/cheight);
+
+                                cylinder.castShadow = true;
+                                cylinder.receiveShadow = true;
+                                
+                                lineGroup.add( cylinder );
+                            }
+                    }
+                    //蓝色-第三层
+                    //
+                    scene.add( lineGroup );
+                    /*
+                    selectedObjects = [];
+                    selectedObjects.push( lineGroup );//给选中的线条和物体加发光特效
+                    selectedObjects.push( intersects[ 0 ].object );
+                    outlinePass.selectedObjects = selectedObjects;*/
+                }
+}//函数
+                function onTouchMove( event ) {
+
+                    var x, y;
+
+                    if ( event.changedTouches ) {
+
+                        x = event.changedTouches[ 0 ].pageX;
+                        y = event.changedTouches[ 0 ].pageY;
+
+                    } else {
+
+                        x = event.clientX;
+                        y = event.clientY;
+
+                    }
+
+                    mouse.x = ( x / window.innerWidth ) * 2 - 1;
+                    mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
+                    checkIntersection();
+
+                }
+
+                function addSelectedObject( object ) {
+
+                    selectedObjects = [];
+                    selectedObjects.push( object );
+
+                }
+
+                function checkIntersection() {
+
+                    raycaster.setFromCamera( mouse, camera );
+
+                    var intersects = raycaster.intersectObjects( [group], true );
+
+                    if ( intersects.length > 0 ) {
+
+                        //var selectedObject = intersects[ 0 ].object;
+                        //addSelectedObject( selectedObject );
+                        //outlinePass.selectedObjects = selectedObjects;
+
+                    } else {
+
+                        // outlinePass.selectedObjects = [];
+
+                    }
+
+                }
+
+            }
+
+            function onWindowResize() {
+
+                var width = window.innerWidth;
+                var height = window.innerHeight;
+
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize( width, height );
+                composer.setSize( width, height );
+
+                effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
+            }
+
+            function animate() {
+
+                //scene.background = new THREE.Color('rgba(0,0,0,0)');
+
+                requestAnimationFrame( animate );
+
+                stats.begin();
+
+                var timer = performance.now();
+
+                if ( params.rotate ) {
+
+                    scene.rotation.y = timer * 0.0001;
+
+                }
+
+                controls.update();
+
+                composer.render();
+
+                stats.end();
+
+            }
+
+        </script>
+    </body>
+</html>

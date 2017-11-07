@@ -244,7 +244,7 @@ THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype
 
 		if ( maskActive ) renderer.context.disable( renderer.context.STENCIL_TEST );
 
-		renderer.setClearColor( 0xffffff, 1 );
+		renderer.setClearColor( 0xfff000, 0.3 );
 
 		// Make selected objects invisible
 		this.changeVisibilityOfSelectedObjects( false );

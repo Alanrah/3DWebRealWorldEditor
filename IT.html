@@ -80,7 +80,7 @@
 			};
 
 			// Init gui
-/*
+
 			var gui = new dat.GUI( { width: 300 } );
 
 			gui.add( params, 'edgeStrength', 0.01, 10 ).onChange( function ( value ) {
@@ -135,7 +135,7 @@
 				outlinePass.hiddenEdgeColor.set( value );
 
 			} );
-*/
+
 			init();
 			animate();
 
@@ -152,41 +152,15 @@
 				// todo - support pixelRatio in this demo
 				renderer.setSize( width, height );
 				document.body.appendChild( renderer.domElement );
-/*
-				var manager = new THREE.LoadingManager();
-				manager.onProgress = function ( item, loaded, total ) {
-					console.log( item, loaded, total );
-				};
-				var onProgress = function ( xhr ) {
-					if ( xhr.lengthComputable ) {
-						var percentComplete = xhr.loaded / xhr.total * 100;
-						console.log( Math.round(percentComplete, 2) + '% downloaded' );
-					}
-				};
-				var onError = function ( xhr ) {
-				};
-				var url = 'IT1.json';
-				var loader= new THREE.ObjectLoader();
-				loader.load( url, function ( loadedScene ) {
-					//scene = loadedScene;
-					var objects = loadedScene.children;
-					for(var i=0;i<objects.length;i++){
-						if(objects[i].type == 'Mesh' ){
-							objects[i].receiveShadow = true;
-							objects[i].castShadow = true;
-							geometry.vertices.push(objects[i].position);
-							group.add(objects[i]);
-						}
-					}
-				} );*/
+
 				scene = new THREE.Scene();
 				scene.add(group);
 
-				var pl1h=-6;
+				var pl1h=-6;//各个plane层次高度
 				var pl2h=0;
 				var pl3h=6;
-
-
+				var opacity =0.7;
+				var transparent=true;
 				// 实例化一个加载器
 				var loader = new THREE.TextureLoader();
 
@@ -201,7 +175,8 @@
 							side: THREE.DoubleSide,
 							map: texture
 						 } );
-						material.opacity = 0.5;
+						material.opacity = opacity;
+						material.transparent = transparent; 
 						var geometry = new THREE.PlaneBufferGeometry( 20, 10, 3.98 );
 						var plane1 = new THREE.Mesh( geometry, material );
 						plane1.rotateX(-Math.PI/2);
@@ -229,8 +204,8 @@
 							side: THREE.DoubleSide,
 							map: texture
 						 } );
-						material.opacity = 0.8;
-						//material.transparent = true; 
+						material.opacity = opacity;
+						material.transparent = transparent; 
 						var geometry = new THREE.PlaneBufferGeometry( 20, 10, 3.98 );
 						var plane1 = new THREE.Mesh( geometry, material );
 						plane1.rotateX(-Math.PI/2);
@@ -258,8 +233,8 @@
 							side: THREE.DoubleSide,
 							map: texture
 						 } );
-						material.opacity = 0.8;
-						//material.transparent = true; 
+						material.opacity = opacity;
+						material.transparent = transparent; 
 						var geometry = new THREE.PlaneBufferGeometry( 20, 10, 3.98 );
 						var plane1 = new THREE.Mesh( geometry, material );
 						plane1.rotateX(-Math.PI/2);
@@ -275,117 +250,6 @@
 						console.log( 'An error happened' );
 					}
 				);
-
-				// 加载一个资源
-				loader.load(
-					// 资源链接
-					'IT/word2.png',
-					// 资源加载完成后的回调函数
-					function ( texture ) {
-						// do something with the texture
-						var material = new THREE.MeshPhongMaterial( {
-							side: THREE.DoubleSide,
-							map: texture
-						 } );
-						material.opacity = 0.8;
-						material.transparent = true;
-						var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
-						var plane1 = new THREE.Mesh( geometry, material );
-						plane1.position.set(15,-3,0);
-						scene.add( plane1 );
-						var lmaterial = new THREE.LineBasicMaterial({
-							color: 0x66ffff
-							});
-						var lgeometry = new THREE.Geometry();
-						lgeometry.vertices.push(new THREE.Vector3( 13,-3,0 ),
-												new THREE.Vector3( 10,-3,0 ),
-												new THREE.Vector3( 8,-6,0 ));
-						var line = new THREE.Line(lgeometry,lmaterial);
-						scene.add(line);
-					},
-					// 资源加载过程中的回调函数
-					function ( xhr ) {
-						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-					},
-					// 资源下载出错时的回调函数
-					function ( xhr ) {
-						console.log( 'An error happened' );
-					}
-				);
-
-				loader.load(
-					// 资源链接
-					'IT/word2.png',
-					// 资源加载完成后的回调函数
-					function ( texture ) {
-						// do something with the texture
-						var material = new THREE.MeshPhongMaterial( {
-							side: THREE.DoubleSide,
-							map: texture
-						 } );
-						material.opacity = 0.8;
-						material.transparent = true;
-						var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
-						var plane1 = new THREE.Mesh( geometry, material );
-						plane1.position.set(15,2,0);
-						scene.add( plane1 );
-						var lmaterial = new THREE.LineBasicMaterial({
-							color: 0x66ffff
-							});
-						var lgeometry = new THREE.Geometry();
-						lgeometry.vertices.push(new THREE.Vector3( 13,2,0 ),
-												new THREE.Vector3( 10,2,0 ),
-												new THREE.Vector3( 8,0,0 ));
-						var line = new THREE.Line(lgeometry,lmaterial);
-						scene.add(line);	
-					},
-					// 资源加载过程中的回调函数
-					function ( xhr ) {
-						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-					},
-					// 资源下载出错时的回调函数
-					function ( xhr ) {
-						console.log( 'An error happened' );
-					}
-				);
-
-				loader.load(
-					// 资源链接
-					'IT/word1.png',
-					// 资源加载完成后的回调函数
-					function ( texture ) {
-						// do something with the texture
-						var material = new THREE.MeshPhongMaterial( {
-							side: THREE.DoubleSide,
-							map: texture
-						 } );
-						material.opacity = 0.8;
-						material.transparent = true;
-						var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
-						var plane1 = new THREE.Mesh( geometry, material );
-						plane1.position.set(15,7,0);
-						scene.add( plane1 );
-						var lmaterial = new THREE.LineBasicMaterial({
-							color: 0x66ffff
-							});
-						var lgeometry = new THREE.Geometry();
-						lgeometry.vertices.push(new THREE.Vector3( 13,7,0 ),
-												new THREE.Vector3( 10,7,0 ),
-												new THREE.Vector3( 8,6,0 ));
-						var line = new THREE.Line(lgeometry,lmaterial);
-						scene.add(line);
-
-					},
-					// 资源加载过程中的回调函数
-					function ( xhr ) {
-						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-					},
-					// 资源下载出错时的回调函数
-					function ( xhr ) {
-						console.log( 'An error happened' );
-					}
-				);
-
 
 				var bluematerial = new THREE.MeshPhongMaterial( {color: 0x66ffff} );
 				var yellowmaterial = new THREE.MeshPhongMaterial( {color: 0xFF9900} );
@@ -471,52 +335,12 @@
 				box16.position.set(4.5,pl3h+1,0.4);
 				group.add( box16 );
 
-				var lmaterial = new THREE.LineBasicMaterial({
-							color: 0x66ffff
-							});
-				
-				for(i=1;i<=11;i++){
-					var lgeometry = new THREE.Geometry();
-					lgeometry.vertices.push(new THREE.Vector3( 3.6,pl2h+.5,1.5 ),geometry.vertices[i-1]);
-					var line = new THREE.Line(lgeometry,lmaterial);
-					scene.add(line);
-				}
-
-				var xma = new THREE.LineBasicMaterial({
-							color: 0xffdfc5
-							});
-				var lgeometry = new THREE.Geometry();
-				lgeometry.vertices.push(new THREE.Vector3( 4.5,pl3h+1,0.4 ),new THREE.Vector3( 7,pl2h+.5,1.5 ));
-				var line = new THREE.Line(lgeometry,xma);
-				scene.add(line);
-				var lgeometry = new THREE.Geometry();
-				lgeometry.vertices.push(new THREE.Vector3( 4.5,pl3h+1,0.4 ),new THREE.Vector3( 7,pl2h+.5,-0.4 ));
-				var line = new THREE.Line(lgeometry,xma);
-				scene.add(line);
-				var lgeometry = new THREE.Geometry();
-				lgeometry.vertices.push(new THREE.Vector3( 4.5,pl3h+1,0.4 ),new THREE.Vector3( 3.6,pl2h+.5,1.5 ));
-				var line = new THREE.Line(lgeometry,xma);
-				scene.add(line);
-				var lgeometry = new THREE.Geometry();
-				lgeometry.vertices.push(new THREE.Vector3( 4.5,pl3h+1,0.4 ),new THREE.Vector3( 3.6,pl2h+.5,-0.4 ));
-				var line = new THREE.Line(lgeometry,xma);
-				scene.add(line);
-
-/*
-				var light = new THREE.PointLight( 0xffffff, 1, 100 );
-				light.position.set( -8, 4, 0 );
-				scene.add( light );
-
-				light = new THREE.PointLight( 0xffffff, 1, 100 );
-				light.position.set( 8, 4, 15 );
-				scene.add( light );
-*/
 				var light = new THREE.PointLight( 0xffffff, 1, 100 );
 				light.position.set( -8, 9, 0 );
 				scene.add( light );
 
 				light = new THREE.PointLight( 0xffffff, 1, 100 );
-				light.position.set( 8, 9, 15 );
+				light.position.set( 16, 9, 15 );
 				scene.add( light );
 
 				var light = new THREE.PointLight( 0xffffff, 1, 100 );
@@ -592,78 +416,209 @@
 			            }
 			        } );
 			        
-			        if ( intersects.length > 0 && (intersects[0].object.geometry.type== 'BoxBufferGeometry' || intersects[0].object.geometry.type == 'SphereBufferGeometry') ) {
+			        if ( intersects.length > 0 && (intersects[0].object.geometry.type== 'BoxBufferGeometry' ) ) {
+			        	if (intersects[0].object.position.y<=(pl1h+1)) {
+				            var object = intersects[0].object;
+				            geometryChange = new THREE.Geometry();
+				            var position = intersects[0].object.position;
+				            //搜索 geometry.vertices 中的 position 重新绘制选中物体相关linet
+				            var p = geometry.vertices.length;
+				            for(i=0;i<p;i++){
+				                if(geometry.vertices[i] == position){
 
-			            var object = intersects[0].object;
-			            geometryChange = new THREE.Geometry();
-			            var position = intersects[0].object.position;
-			            //搜索 geometry.vertices 中的 position 重新绘制选中物体相关linet
-			            var p = geometry.vertices.length;
-			            for(i=0;i<p;i++){
-			                if(geometry.vertices[i] == position){
+				                    if (i == p - 1){
+				                        geometryChange.vertices.push(geometry.vertices[p - 2]);
+				                        geometryChange.vertices.push(position);
+				                    }
+				                    else if(i == 0){
+				                        geometryChange.vertices.push(position);
+				                        geometryChange.vertices.push(geometry.vertices[i+1]);
+				                    }
 
-			                    if (i == p - 1){
-			                        geometryChange.vertices.push(geometry.vertices[p - 2]);
-			                        geometryChange.vertices.push(position);
-			                    }
-			                    else if(i == 0){
-			                        geometryChange.vertices.push(position);
-			                        geometryChange.vertices.push(geometry.vertices[i+1]);
-			                    }
+				                    else{
+				                        geometryChange.vertices.push(geometry.vertices[i-1]);
+				                        geometryChange.vertices.push(position);
+				                        geometryChange.vertices.push(geometry.vertices[i+1]);
+				                      
+				                    }
+				                }
+				            }
+				            var temp = geometryChange.vertices.length;
+				            var xyz = geometryChange.vertices;
+				            var material = new THREE.MeshPhongMaterial( {
+											color: 0x156289,
+											emissive: 0x00FFFF,
+											side: THREE.DoubleSide,
+											shading: THREE.FlatShading,
+											vertexColors:THREE.FaceColors
+										} );
+				            var x,y,z,xw,zh,cheight;//position(x,y,z),xw是长，y是高，zh
+				            for(i=0;i<temp-1;i++){
+				            	x= (xyz[i].x+xyz[i+1].x)/2;
+				            	y=-5.9;
+				            	z=(xyz[i].z+xyz[i+1].z)/2;
+				            	xw=xyz[i].x-xyz[i+1].x;
+				            	zh=xyz[i].z-xyz[i+1].z;
+				            	cheight=Math.sqrt(xw*xw+zh*zh);//圆柱体长度
+				            	var geometryCylinderLine = new THREE.CylinderBufferGeometry( 0.02, 0.02, cheight,20 );
+				            	var cylinder = new THREE.Mesh( geometryCylinderLine, material );
+				            	cylinder.position.set( x, y, z );//两实体的中点
+				            	cylinder.rotation.x -= Math.PI * 0.5;
+				            	//考虑到局部坐标系和全局坐标系的转换，柱体是在全局坐标系下旋转
+				            	if(xyz[i].x > xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+				            		cylinder.rotation.z -= Math.asin(xw/cheight);//Math.asin(xw/cheight)为柱体要旋转的角度
+				            	else if(xyz[i].x > xyz[i+1].x && xyz[i].z > xyz[i+1].z)
+				            		cylinder.rotation.z += Math.asin(xw/cheight);
+				            	else if(xyz[i].x < xyz[i+1].x && xyz[i].z < xyz[i+1].z)
+				            		cylinder.rotation.z -= Math.asin(xw/cheight);
+				            	else
+				            		cylinder.rotation.z += Math.asin(xw/cheight);
 
-			                    else{
-			                        geometryChange.vertices.push(geometry.vertices[i-1]);
-			                        geometryChange.vertices.push(position);
-			                        geometryChange.vertices.push(geometry.vertices[i+1]);
-			                      
-			                    }
-			                }
-			            }
-			            var temp = geometryChange.vertices.length;
-			            var xyz = geometryChange.vertices;
-			            var material = new THREE.MeshPhongMaterial( {
-										color: 0x156289,
-										emissive: 0x00FFFF,
+				            	cylinder.castShadow = true;
+				            	cylinder.receiveShadow = true;
+				            	//圆柱而不是cube
+				            	lineGroup.add( cylinder );
+				            }
+
+				            loader.load(
+								'IT/word2.png',
+								function ( texture ) {
+									var material = new THREE.MeshPhongMaterial( {
 										side: THREE.DoubleSide,
-										shading: THREE.FlatShading,
-										vertexColors:THREE.FaceColors
-									} );
-			            var x,y,z,xw,zh,cheight;//position(x,y,z),xw是长，y是高，zh
-			            for(i=0;i<temp-1;i++){
-			            	x= (xyz[i].x+xyz[i+1].x)/2;
-			            	y=-5.9;
-			            	z=(xyz[i].z+xyz[i+1].z)/2;
-			            	xw=xyz[i].x-xyz[i+1].x;
-			            	zh=xyz[i].z-xyz[i+1].z;
-			            	cheight=Math.sqrt(xw*xw+zh*zh);//圆柱体长度
-			            	var geometryCylinderLine = new THREE.CylinderBufferGeometry( 0.02, 0.02, cheight,20 );
-			            	var cylinder = new THREE.Mesh( geometryCylinderLine, material );
-			            	cylinder.position.set( x, y, z );//两实体的中点
-			            	cylinder.rotation.x -= Math.PI * 0.5;
-			            	//考虑到局部坐标系和全局坐标系的转换，柱体是在全局坐标系下旋转
-			            	if(xyz[i].x > xyz[i+1].x && xyz[i].z < xyz[i+1].z)
-			            		cylinder.rotation.z -= Math.asin(xw/cheight);//Math.asin(xw/cheight)为柱体要旋转的角度
-			            	else if(xyz[i].x > xyz[i+1].x && xyz[i].z > xyz[i+1].z)
-			            		cylinder.rotation.z += Math.asin(xw/cheight);
-			            	else if(xyz[i].x < xyz[i+1].x && xyz[i].z < xyz[i+1].z)
-			            		cylinder.rotation.z -= Math.asin(xw/cheight);
-			            	else
-			            		cylinder.rotation.z += Math.asin(xw/cheight);
+										map: texture
+									 } );
+									material.opacity = 0.8;
+									material.transparent = true;
+									var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
+									var plane1 = new THREE.Mesh( geometry, material );
+									plane1.position.set(15,pl1h+3,0);
+									lineGroup.add( plane1 );
+									var lmaterial = new THREE.LineBasicMaterial({
+										color: 0x66ffff
+										});
+									var lgeometry = new THREE.Geometry();
+									lgeometry.vertices.push(new THREE.Vector3( 13,pl1h+3,0 ),
+															new THREE.Vector3( 10,pl1h+3,0 ),
+															intersects[0].object.position);
+									var line = new THREE.Line(lgeometry,lmaterial);
+									lineGroup.add(line);
+								},
+								function ( xhr ) {
+									console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+								},
+								function ( xhr ) {
+									console.log( 'An error happened' );
+								}
+							);
+	            			
+				        }
+				       //最底层连线
+				       else if (intersects[0].object.position.y<=(pl2h+1) && intersects[0].object.position.y>(pl1h+1)) {
+				       		var lmaterial = new THREE.LineBasicMaterial({
+								color: 0x66ffff
+								});
+					
+							for(i=1;i<=11;i++){
+								var lgeometry = new THREE.Geometry();
+								lgeometry.vertices.push(intersects[0].object.position,geometry.vertices[i-1]);
+								var line = new THREE.Line(lgeometry,lmaterial);
+								lineGroup.add(line);
+							}
 
-			            	cylinder.castShadow = true;
-			            	cylinder.receiveShadow = true;
-			            	//圆柱而不是cube
-			            	lineGroup.add( cylinder );
+							loader.load(
 
-			            }
-            			scene.add( lineGroup );
+								'IT/word2.png',
+								function ( texture ) {
+									var material = new THREE.MeshPhongMaterial( {
+										side: THREE.DoubleSide,
+										map: texture
+									 } );
+									material.opacity = 0.8;
+									material.transparent = true;
+									var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
+									var plane1 = new THREE.Mesh( geometry, material );
+									plane1.position.set(15,pl2h+3,0);
+									lineGroup.add( plane1 );
+									var lmaterial = new THREE.LineBasicMaterial({
+										color: 0x66ffff
+										});
+									var lgeometry = new THREE.Geometry();
+									lgeometry.vertices.push(new THREE.Vector3( 13,pl2h+3,0 ),
+															new THREE.Vector3( 10,pl2h+3,0 ),
+															intersects[0].object.position);
+									var line = new THREE.Line(lgeometry,lmaterial);
+									lineGroup.add(line);	
+								},
+								function ( xhr ) {
+									console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+								},
+								function ( xhr ) {
+									console.log( 'An error happened' );
+								}
+							);
+				       }
+
+				       else{
+				       		var xma = new THREE.LineBasicMaterial({
+								color: 0xffdfc5
+								});
+							var lgeometry = new THREE.Geometry();
+							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 7,pl2h+.5,1.5 ));
+							var line = new THREE.Line(lgeometry,xma);
+							lineGroup.add(line);
+							var lgeometry = new THREE.Geometry();
+							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 7,pl2h+.5,-0.4 ));
+							var line = new THREE.Line(lgeometry,xma);
+							lineGroup.add(line);
+							var lgeometry = new THREE.Geometry();
+							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 3.6,pl2h+.5,1.5 ));
+							var line = new THREE.Line(lgeometry,xma);
+							lineGroup.add(line);
+							var lgeometry = new THREE.Geometry();
+							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 3.6,pl2h+.5,-0.4 ));
+							var line = new THREE.Line(lgeometry,xma);
+							lineGroup.add(line);
+
+							loader.load(
+								'IT/word1.png',
+								function ( texture ) {
+									var material = new THREE.MeshPhongMaterial( {
+										side: THREE.DoubleSide,
+										map: texture
+									 } );
+									material.opacity = 0.8;
+									material.transparent = true;
+									var geometry = new THREE.PlaneBufferGeometry( 4, 1.5, 1 );
+									var plane1 = new THREE.Mesh( geometry, material );
+									plane1.position.set(15,pl3h+3,0);
+									lineGroup.add( plane1 );
+									var lmaterial = new THREE.LineBasicMaterial({
+										color: 0x66ffff
+										});
+									var lgeometry = new THREE.Geometry();
+									lgeometry.vertices.push(new THREE.Vector3( 13,pl3h+3,0 ),
+															new THREE.Vector3( 10,pl3h+3,0 ),
+															intersects[0].object.position);
+									var line = new THREE.Line(lgeometry,lmaterial);
+									lineGroup.add(line);
+
+								},
+								function ( xhr ) {
+									console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+								},
+								function ( xhr ) {
+									console.log( 'An error happened' );
+								}
+							);
+				       }
+
+				       scene.add( lineGroup );
             			selectedObjects = [];
 						selectedObjects.push( lineGroup );//给选中的线条和物体加发光特效
 						selectedObjects.push( intersects[ 0 ].object );
             			outlinePass.selectedObjects = selectedObjects;
-			        }
-			}
-
+					}
+}
 				function onTouchMove( event ) {
 
 					var x, y;
@@ -733,7 +688,7 @@
 
 			function animate() {
 
-				//scene.background = new THREE.Color(0x1B1717)
+				//scene.background = new THREE.Color('rgba(0,0,0,0)');
 
 				requestAnimationFrame( animate );
 
@@ -743,7 +698,7 @@
 
 				if ( params.rotate ) {
 
-					group.rotation.y = timer * 0.0001;
+					scene.rotation.y = timer * 0.0001;
 
 				}
 
