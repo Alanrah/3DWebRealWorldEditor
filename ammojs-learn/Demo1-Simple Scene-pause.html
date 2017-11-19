@@ -25,7 +25,6 @@
     <script src="js/controls/OrbitControls.js"></script>
     <script src="js/libs/stats.min.js"></script>
     <script src="js/Detector.js"></script>
-    <script type="text/javascript" src="test.js"></script>
 </head>
 <body>
 
@@ -43,8 +42,6 @@
         document.getElementById('container').innerHTML = '';
     }
 
-    var testx = new test();
-
     // 全局变量
 
     // 绘图相关变量
@@ -52,7 +49,6 @@
     var camera, controls, scene, renderer;
     var textureLoader;
     var clock = new THREE.Clock();
-    
 
     // 物理引擎相关变量
     var gravityConstant = -9.8;
@@ -239,10 +235,13 @@
         physicsShape.calculateLocalInertia(mass, localInertia);
 
         var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, physicsShape, localInertia);
+        console.log(rbInfo);
         var body = new Ammo.btRigidBody(rbInfo);
+        console.log(body.getCenterOfMassTransform());
 
         threeObject.userData.physicsBody = body;
-
+console.log(threeObject.userData.physicsBody.getUserPointer())
+console.log(threeObject.userData.physicsBody.getUserIndex())
         scene.add(threeObject);
 
         if (mass > 0) {
@@ -320,8 +319,8 @@
         window.addEventListener( 'mousedown', function( event ) {
 
             mouseCoords.set(
-                    ( event.clientX / window.innerWidth ) * 2 - 1,
-                    - ( event.clientY / window.innerHeight ) * 2 + 1
+                    ( event.clientX /  viewport.clientWidth ) * 2 - 1,
+                    - ( event.clientY / viewport.clientHeight ) * 2 + 1
             );
 
             raycaster.setFromCamera( mouseCoords, camera );

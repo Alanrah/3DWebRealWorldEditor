@@ -255,31 +255,27 @@
 				group.add( box16 );
 
 				var light = new THREE.PointLight( 0xffffff, 1, 100 );
-                light.position.set( -18, 9, -5 );
-                scene.add( light );
+				light.position.set( -8, 9, 0 );
+				scene.add( light );
 
-                var light = new THREE.PointLight( 0xffffff, 1, 100 );
-                light.position.set( 16, 9, -15 );
-                scene.add( light );
+				light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( 16, 9, 15 );
+				scene.add( light );
 
-                var light = new THREE.PointLight( 0xffffff, 1, 100 );
-                light.position.set( 10, 15, -5 );
-                scene.add( light );
+				var light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( 5, 15, 0 );
+				scene.add( light );
 
-                var light = new THREE.PointLight( 0xffffff, 1, 100 );
-                light.position.set( -10, 15, -15 );
-                scene.add( light );
+				var light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( -5, 15, 15 );
+				scene.add( light );
 
-                var light = new THREE.PointLight( 0xffffff, 1, 100 );
-                light.position.set( 15, 15, 15 );
-                scene.add( light );
+				var light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( 0, -15, -10 );
+				scene.add( light );
 
-                var light = new THREE.PointLight( 0xffffff, 1, 100 );
-                light.position.set( 0, -20, 0 );
-                scene.add( light );
-
-                var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-                scene.add( light );
+				var light = new THREE.AmbientLight( 0xCAF4EC);
+				scene.add( light );
 
 				camera = new THREE.PerspectiveCamera( 45, width / height, 1, 10000 );
 				camera.position.set( 7, 23, 20 );
@@ -309,16 +305,10 @@
 			        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 			        raycaster.setFromCamera( mouse, camera );
 			        var intersects = raycaster.intersectObjects( [group], true );
-			         //只重画当前选中部分的线条，删除则显示所有选中部分的线条
-			        scene.traverse( function ( sceneChild ) {
-			            if ( sceneChild.name === 'lineGroup' ) {
-			            sceneChild.children = new Array();
-			            scene.remove(sceneChild);
-			            }
-			        } );
 			        
 			        if ( intersects.length > 0 && (intersects[0].object.geometry.type== 'BoxBufferGeometry' ) ) {
 			        	if (intersects[0].object.position.y<=(pl1h+1.1)) {
+
 				            var object = intersects[0].object;
 				            geometryChange = new THREE.Geometry();
 				            var position = intersects[0].object.position;
@@ -460,6 +450,15 @@
 				       }
 
 				       else{
+
+				       		//只重画当前选中部分的线条，删除则显示所有选中部分的线条
+					        scene.traverse( function ( sceneChild ) {
+					            if ( sceneChild.name === 'lineGroup' ) {
+					            sceneChild.children = new Array();
+					            scene.remove(sceneChild);
+					            }
+					        } );
+					        
 				       		var xma = new THREE.LineBasicMaterial({
 								color: 0xffdfc5
 								});

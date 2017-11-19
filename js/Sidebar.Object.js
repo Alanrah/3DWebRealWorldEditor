@@ -346,7 +346,7 @@ Sidebar.Object = function ( editor ) {
 
 		var object = editor.selected;
 
-		if ( object !== null ) {
+		if ( object !== null) { 
 
 			var newPosition = new THREE.Vector3( objectPositionX.getValue(), objectPositionY.getValue(), objectPositionZ.getValue() );
 			if ( object.position.distanceTo( newPosition ) >= 0.01 ) {

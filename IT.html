@@ -6,8 +6,8 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
 			body {
-				background: url("IT/background.png");
-				background-size :100% 100%;
+				/*background: url("IT/background.png");
+				background-size :100% 100%;*/
 				margin: 0px;
 				overflow: hidden;
 				font-family:Monospace;
@@ -46,14 +46,17 @@
 		<script src="js/postprocessing/RenderPass.js"></script>
 		<script src="js/postprocessing/ShaderPass.js"></script>
 		<script src="js/postprocessing/OutlinePass.js"></script>
+		<script src="js/postprocessing/TexturePass.js"></script>
+		<script src="js/postprocessing/ClearPass.js"></script>
 		<script src="js/libs/stats.min.js"></script>
 		<script src='js/libs/dat.gui.min.js'></script>
 		<script>
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-			var container, stats;
+			var container, stats, copyPass,texturePass;
 			var camera, scene, renderer, controls;
+			var bgcamera, bgscene;
 			var raycaster = new THREE.Raycaster();
 
 			var mouse = new THREE.Vector2();
@@ -82,7 +85,7 @@
 			// Init gui
 
 			var gui = new dat.GUI( { width: 300 } );
-
+ 
 			gui.add( params, 'edgeStrength', 0.01, 10 ).onChange( function ( value ) {
 
 				outlinePass.edgeStrength = Number( value );
@@ -147,14 +150,43 @@
 				var width = window.innerWidth;
 				var height = window.innerHeight;
 
-				renderer = new THREE.WebGLRenderer( { antialias: false ,alpha :true } );
+				renderer = new THREE.WebGLRenderer( { antialias: false } );//,alpha :true 
 				renderer.shadowMap.enabled = true;
 				// todo - support pixelRatio in this demo
 				renderer.setSize( width, height );
 				document.body.appendChild( renderer.domElement );
 
+				var bgcamera = new THREE.OrthographicCamera(-window.innerWidth,window.innerWidth,window.innerHeight,-window.innerHeight,-100000,100000);
+				bgcamera.position.z=50;
+				var backTexture = new THREE.Texture();
+				var backLoader = new THREE.ImageLoader(  );
+	            backLoader.load( 'IT/background.png', function ( image ) {
+
+	                backTexture.image = image;
+	                backTexture.needsUpdate = true;
+
+	            } );
+	            var backMaterial = new THREE.MeshPhongMaterial( {
+							side: THREE.DoubleSide,
+							map: backTexture
+						 } );
+	            var backGeometry = new THREE.PlaneBufferGeometry(1,1);
+	            var backPlane = new THREE.Mesh(backGeometry,backMaterial);
+	            backPlane.position.z=-100;
+	            backPlane.scale.set(window.innerWidth*2,window.innerHeight*2,1);
+	            bgscene = new THREE.Scene();
+	            bgscene.add(backPlane);
+
+	            var bgPass = new THREE.RenderPass(bgscene.bgcamera);
+
+
 				scene = new THREE.Scene();
 				scene.add(group);
+/*
+*/
+				scene.background = new THREE.CubeTextureLoader()
+					.setPath( 'IT/' )
+					.load( [ 'background2.png', 'background2.png', 'background2.png', 'background2.png', 'background2.png', 'background1.png' ] );
 
 				var pl1h=-6;//各个plane层次高度
 				var pl2h=0;
@@ -259,80 +291,95 @@
 				var geometry1 = new THREE.BoxBufferGeometry( 1, 1, 1 );
 
 				var box1 = new THREE.Mesh( geometry1, whitematerial );
-				box1.position.set(-5.6,pl1h+0.5,-3);
+				box1.position.set(-5.6,pl1h+0.6,-3);
+                box1.castShadow=true;
 				group.add( box1 );
 				geometry.vertices.push(box1.position);
-
 				
 				var box2 = new THREE.Mesh( geometry2, bluematerial );
-				box2.position.set(-5.8,pl1h+1,-0.9);
+				box2.position.set(-5.8,pl1h+1.1,-0.9);
+                box2.castShadow=true;
 				group.add( box2 );
 				geometry.vertices.push(box2.position);
 
 				var box3 = new THREE.Mesh( geometry2, bluematerial );
-				box3.position.set(-5.6,pl1h+1,1.4);
+				box3.position.set(-5.6,pl1h+1.1,1.4);
+                box3.castShadow=true;
 				group.add( box3 );
 				geometry.vertices.push(box3.position);
 
 				var box4 = new THREE.Mesh( geometry1, whitematerial );
-				box4.position.set(-1.8,pl1h+0.5,-2.1);
+				box4.position.set(-1.8,pl1h+0.6,-2.1);
+                box4.castShadow=true;
 				group.add( box4 );
 				geometry.vertices.push(box4.position);
 
 				var box5 = new THREE.Mesh( geometry1, whitematerial );
-				box5.position.set(-1.8,pl1h+0.5,0);
+				box5.position.set(-1.8,pl1h+0.6,0);
+                box5.castShadow=true;
 				group.add( box5 );
 				geometry.vertices.push(box5.position);
 
 				var box6 = new THREE.Mesh( geometry2, bluematerial );
-				box6.position.set(2,pl1h+1,-3);
+				box6.position.set(2,pl1h+1.1,-3);
+                box6.castShadow=true;
 				group.add( box6 );
 				geometry.vertices.push(box6.position);
 
 				var box7 = new THREE.Mesh( geometry2, yellowmaterial );
-				box7.position.set(3,pl1h+1,-1);
+				box7.position.set(3,pl1h+1.1,-1);
+                box7.castShadow=true;
 				group.add( box7 );
 				geometry.vertices.push(box7.position);
 
 				var box8 = new THREE.Mesh( geometry2, yellowmaterial );
-				box8.position.set(2.7,pl1h+1,2);
+				box8.position.set(2.7,pl1h+1.1,2);
+                box8.castShadow=true;
 				group.add( box8 );
 				geometry.vertices.push(box8.position);
 
 				var box9 = new THREE.Mesh( geometry2, bluematerial );
-				box9.position.set(6.7,pl1h+1,-3);
+				box9.position.set(6.7,pl1h+1.1,-3);
+                box9.castShadow=true;
 				group.add( box9 );
 				geometry.vertices.push(box9.position);
 
 				var box10 = new THREE.Mesh( geometry2, yellowmaterial );
-				box10.position.set(5.5,pl1h+1,0.5);
+				box10.position.set(5.5,pl1h+1.1,0.5);
+                box10.castShadow=true;
 				group.add( box10 );
 				geometry.vertices.push(box10.position);
 
 				var box11 = new THREE.Mesh( geometry2, yellowmaterial );
-				box11.position.set(7.4,pl1h+1,2.2);
+				box11.position.set(7.4,pl1h+1.1,2.2);
+                box11.castShadow=true;
 				group.add( box11 );
 				geometry.vertices.push(box11.position);
 
 
 				var box12 = new THREE.Mesh( geometry1, whitematerial );
-				box12.position.set(3.6,pl2h+0.5,-0.4);
+				box12.position.set(3.6,pl2h+0.6,-0.4);
+                box12.castShadow=true;
 				group.add( box12 );
 
 				var box13 = new THREE.Mesh( geometry1, whitematerial );
-				box13.position.set(3.6,pl2h+.5,1.5);
+				box13.position.set(3.6,pl2h+.6,1.5);
+                box13.castShadow=true;
 				group.add( box13 );
 
 				var box14 = new THREE.Mesh( geometry1, whitematerial );
-				box14.position.set(7,pl2h+.5,-0.4);
+				box14.position.set(7,pl2h+.6,-0.4);
+                box14.castShadow=true;
 				group.add( box14 );
 
 				var box15 = new THREE.Mesh( geometry1, whitematerial );
-				box15.position.set(7,pl2h+.5,1.5);
+				box15.position.set(7,pl2h+.6,1.5);
+                box15.castShadow=true;
 				group.add( box15 );
 
 				var box16 = new THREE.Mesh( geometry2, yellowmaterial );
-				box16.position.set(4.5,pl3h+1,0.4);
+				box16.position.set(4.5,pl3h+1.1,0.4);
+                box16.castShadow=true;
 				group.add( box16 );
 
 				var light = new THREE.PointLight( 0xffffff, 1, 100 );
@@ -349,6 +396,13 @@
 
 				var light = new THREE.PointLight( 0xffffff, 1, 100 );
 				light.position.set( -5, 15, 15 );
+				scene.add( light );
+
+				var light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( 0, -15, -10 );
+				scene.add( light );
+
+				var light = new THREE.AmbientLight( 0xCAF4EC);
 				scene.add( light );
 
 
@@ -373,22 +427,14 @@
 				composer = new THREE.EffectComposer( renderer );
 
 				var renderPass = new THREE.RenderPass( scene, camera );
+				renderPass.enabled = true;
+				//renderPass.clear = false;
 				composer.addPass( renderPass );
+
+				//composer.addPass(bgPass);
 
 				outlinePass = new THREE.OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
 				composer.addPass( outlinePass );
-
-				var onLoad = function ( texture ) {
-
-					outlinePass.patternTexture = texture;
-					texture.wrapS = THREE.RepeatWrapping;
-					texture.wrapT = THREE.RepeatWrapping;
-
-				};
-
-				var loader = new THREE.TextureLoader();
-
-				loader.load( 'tri_pattern.jpg', onLoad );
 
 				effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
 				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
@@ -408,16 +454,11 @@
 			        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 			        raycaster.setFromCamera( mouse, camera );
 			        var intersects = raycaster.intersectObjects( [group], true );
-			//只重画当前选中部分的线条，删除则显示所有选中部分的线条
-			        scene.traverse( function ( sceneChild ) {
-			            if ( sceneChild.name === 'lineGroup' ) {
-			            sceneChild.children = new Array();
-			            scene.remove(sceneChild);
-			            }
-			        } );
 			        
 			        if ( intersects.length > 0 && (intersects[0].object.geometry.type== 'BoxBufferGeometry' ) ) {
-			        	if (intersects[0].object.position.y<=(pl1h+1)) {
+
+			        	if (intersects[0].object.position.y<=(pl1h+1.1)) {
+
 				            var object = intersects[0].object;
 				            geometryChange = new THREE.Geometry();
 				            var position = intersects[0].object.position;
@@ -455,7 +496,7 @@
 				            var x,y,z,xw,zh,cheight;//position(x,y,z),xw是长，y是高，zh
 				            for(i=0;i<temp-1;i++){
 				            	x= (xyz[i].x+xyz[i+1].x)/2;
-				            	y=-5.9;
+				            	y=-6.0;
 				            	z=(xyz[i].z+xyz[i+1].z)/2;
 				            	xw=xyz[i].x-xyz[i+1].x;
 				            	zh=xyz[i].z-xyz[i+1].z;
@@ -513,7 +554,7 @@
 	            			
 				        }
 				       //最底层连线
-				       else if (intersects[0].object.position.y<=(pl2h+1) && intersects[0].object.position.y>(pl1h+1)) {
+				       else if (intersects[0].object.position.y<=(pl2h+1.1) && intersects[0].object.position.y>(pl1h+1.1)) {
 				       		var lmaterial = new THREE.LineBasicMaterial({
 								color: 0x66ffff
 								});
@@ -559,6 +600,15 @@
 				       }
 
 				       else{
+
+				       	//只重画当前选中部分的线条，删除则显示所有选中部分的线条
+					        scene.traverse( function ( sceneChild ) {
+					            if ( sceneChild.name === 'lineGroup' ) {
+					            sceneChild.children = new Array();
+					            scene.remove(sceneChild);
+					            }
+					        } );
+
 				       		var xma = new THREE.LineBasicMaterial({
 								color: 0xffdfc5
 								});
@@ -663,8 +713,6 @@
 
 					} else {
 
-						// outlinePass.selectedObjects = [];
-
 					}
 
 				}
@@ -687,8 +735,6 @@
 			}
 
 			function animate() {
-
-				//scene.background = new THREE.Color('rgba(0,0,0,0)');
 
 				requestAnimationFrame( animate );
 

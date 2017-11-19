@@ -322,6 +322,7 @@
         threeObject.userData.physicsBody = body;
 
         scene.add(threeObject);
+        console.log(threeObject);
 
         if (mass > 0) {
             rigidBodies.push(threeObject);
@@ -436,7 +437,7 @@
     /**
      * 车辆系统相关函数部分
      */
-    function createBox(pos, quat, w, l, h, mass, friction) {
+    function createBox(pos, quat, w, l, h, mass, friction) {//createBox(new THREE.Vector3(0, -1.5, 0), quaternion, 8, 4, 10, 0);
         var material = createRendomColorObjectMeatrial();
         var shape = new THREE.BoxGeometry(w, l, h, 1, 1, 1);
         var geometry = new Ammo.btBoxShape(new Ammo.btVector3(w * 0.5, l * 0.5, h * 0.5));
@@ -633,8 +634,6 @@
                 wheelMeshes[i].position.set(p.x(), p.y(), p.z());
                 wheelMeshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
             }
-
-            console.log(vehicle);
 
             tm = vehicle.getChassisWorldTransform();
             vehicle.getChassisWorldTransform();
