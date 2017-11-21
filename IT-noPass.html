@@ -22,6 +22,20 @@
 		<script src="js/controls/OrbitControls.js"></script>
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
+
+		<script src="js/shaders/CopyShader.js"></script>
+		<script src="js/shaders/ConvolutionShader.js"></script>
+		<script src="js/shaders/LuminosityHighPassShader.js"></script>
+        <script src="js/shaders/DepthLimitedBlurShader.js"></script>
+        <script src="js/shaders/UnpackDepthRGBAShader.js"></script>
+        <script src="js/shaders/FXAAShader.js"></script>
+
+		<script src="js/postprocessing/EffectComposer.js"></script>
+		<script src="js/postprocessing/RenderPass.js"></script>
+		<script src="js/postprocessing/ShaderPass.js"></script>
+		<script src="js/postprocessing/MaskPass.js"></script>
+		<script src="js/postprocessing/UnrealBloomPass.js"></script>
+		<script src="js/postprocessing/BloomPass.js"></script>
 		<script>
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
@@ -38,10 +52,28 @@
 			var lineGroup = new THREE.Group();//存放动态线条（柱子）
     		lineGroup.name='lineGroup';
 
-			var composer, effectFXAA, outlinePass;
+			var effectComposer, effectFXAA, outlinePass;
 			var obj3d = new THREE.Object3D();
 
 			var group = new THREE.Group();
+
+			var selectedObjects = [];
+
+var sceneBG = new THREE.Scene();
+var cameraBG = new THREE.OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
+cameraBG.position.z = 50;
+var bgPass = new THREE.RenderPass(sceneBG, cameraBG);
+var tloader = new THREE.TextureLoader();
+	tloader.load("IT/background.png",function(texture){
+		var materialColor = new THREE.MeshBasicMaterial({
+            map: texture,
+            depthTest: false
+        });
+        var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materialColor);
+        bgPlane.position.z = -100;
+        bgPlane.scale.set(window.innerWidth * 2, window.innerHeight * 2, 1);
+        sceneBG.add(bgPlane);
+	});
 
 			init();
 			animate();
@@ -281,8 +313,8 @@
 				camera.position.set( 7, 23, 20 );
 
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
-				controls.minDistance = 2;
-				controls.maxDistance = 30;
+				//controls.minDistance = 2;
+				//controls.maxDistance = 30;
 				controls.enablePan = false;
                 controls.zoomSpeed = 1.0;
                 controls.panSpeed = 1.0;
@@ -291,6 +323,8 @@
 
 				stats = new Stats();
 				container.appendChild( stats.dom );
+
+				initBLOOMPostprocessing();
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
@@ -515,7 +549,7 @@
 				       scene.add( lineGroup );
 
 					   }
-                    }
+                    }//function
 				function onTouchMove( event ) {
 
 					var x, y;
@@ -562,6 +596,7 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( width, height );
+				//effectComposer.setSize( width, height );
 			
 			}
 
@@ -581,6 +616,32 @@
             function render(){
                 renderer.render( scene, camera );
             }
+
+            function initBLOOMPostprocessing( ){
+
+				var effectFXAA, bloomPass, renderPass;
+
+				renderer.toneMapping = THREE.LinearToneMapping;
+				renderer.shadowMap.enabled = true;
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+
+				var copyShader = new THREE.ShaderPass(THREE.CopyShader);
+				copyShader.renderToScreen = true;
+
+				bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.3, 0.1, 0.1);//1.0, 9, 0.5, 512);
+				renderPass = new THREE.RenderPass(scene, camera);
+				effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
+				effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight  );
+				effectComposer = new THREE.EffectComposer(renderer);
+				effectComposer.setSize( window.innerWidth, window.innerHeight );
+				effectComposer.addPass(bgPass);
+				effectComposer.addPass(renderPass);
+				effectComposer.addPass(effectFXAA);
+				effectComposer.addPass(bloomPass);
+				effectComposer.addPass(copyShader);
+
+	}
 
 		</script>
 	</body>

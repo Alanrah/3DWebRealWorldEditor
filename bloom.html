@@ -14,94 +14,50 @@
 				text-align:center;
 				font-weight: bold;
 			}
-			a {
-				color:#00ff78;
-			}
-			#info {
-				color: #fff;
-				position: absolute;
-				top: 10px;
-				width: 100%;
-				text-align: center;
-				display:block;
-			}
-			.dg.ac {
-				z-index: 1 !important; /* FIX DAT.GUI */
-			}
 		</style>
 	</head>
 	<body>
 		<script src="../build/three.js"></script>
 		<script src="js/controls/OrbitControls.js"></script>
-		<script src="js/loaders/OBJLoader.js"></script>
-	
 		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
 
 		<script src="js/shaders/CopyShader.js"></script>
+		<script src="js/shaders/ConvolutionShader.js"></script>
 		<script src="js/shaders/LuminosityHighPassShader.js"></script>
         <script src="js/shaders/DepthLimitedBlurShader.js"></script>
         <script src="js/shaders/UnpackDepthRGBAShader.js"></script>
-		<script src="js/shaders/FXAAShader.js"></script>
+        <script src="js/shaders/FXAAShader.js"></script>
+
 		<script src="js/postprocessing/EffectComposer.js"></script>
 		<script src="js/postprocessing/RenderPass.js"></script>
 		<script src="js/postprocessing/ShaderPass.js"></script>
+		<script src="js/postprocessing/MaskPass.js"></script>
 		<script src="js/postprocessing/OutlinePass.js"></script>
 		<script src="js/postprocessing/UnrealBloomPass.js"></script>
 		<script src="js/postprocessing/BloomPass.js"></script>
-		<script src="js/libs/stats.min.js"></script>
-		<script src='js/libs/dat.gui.min.js'></script>
 		<script>
+
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
 			var container, stats;
 			var camera, scene, renderer, controls;
 			var raycaster = new THREE.Raycaster();
+
 			var mouse = new THREE.Vector2();
-			var selectedObjects = [];
+
 			var geometry = new THREE.Geometry();//存放线条的vertices
 			var geometryChange = new THREE.Geometry();//存放当前选中物体相关线条的vertices
 
 			var lineGroup = new THREE.Group();//存放动态线条（柱子）
     		lineGroup.name='lineGroup';
-			var composer, effectFXAA, outlinePass;
+
+			var effectComposer, effectFXAA, outlinePass;
+
+			var  bloomPass, renderPass;
 			var obj3d = new THREE.Object3D();
+
 			var group = new THREE.Group();
-			var params = {
-				edgeStrength: 3.0,
-				edgeGlow: 0.0,
-				edgeThickness: 1.0,
-				pulsePeriod: 0,
-				rotate: false,
-				usePatternTexture: false
-			};
-			// Init gui
-			var gui = new dat.GUI( { width: 300 } );
-			gui.add( params, 'edgeStrength', 0.01, 10 ).onChange( function ( value ) {
-				outlinePass.edgeStrength = Number( value );
-			} );
-			gui.add( params, 'edgeGlow', 0.0, 1 ).onChange( function ( value ) {
-				outlinePass.edgeGlow = Number( value );
-			} );
-			gui.add( params, 'edgeThickness', 1, 4 ).onChange( function ( value ) {
-				outlinePass.edgeThickness = Number( value );
-			} );
-			gui.add( params, 'pulsePeriod', 0.0, 5 ).onChange( function ( value ) {
-				outlinePass.pulsePeriod = Number( value );
-			} );
-			gui.add( params, 'rotate' );
-			gui.add( params, 'usePatternTexture' ).onChange( function ( value ) {
-				outlinePass.usePatternTexture = value;
-			} );
-			var Configuration = function () {
-				this.visibleEdgeColor = '#ffffff';
-				this.hiddenEdgeColor = '#190a05';
-			};
-			var conf = new Configuration();
-			var controllerVisible = gui.addColor( conf, 'visibleEdgeColor' ).onChange( function ( value ) {
-				outlinePass.visibleEdgeColor.set( value );
-			} );
-			var controllerHidden = gui.addColor( conf, 'hiddenEdgeColor' ).onChange( function ( value ) {
-				outlinePass.hiddenEdgeColor.set( value );
-			} );
 
 			var sceneBG = new THREE.Scene();
 			var cameraBG = new THREE.OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
@@ -121,33 +77,37 @@
 
 			init();
 			animate();
+
 			function init() {
+
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
+
 				var width = window.innerWidth;
 				var height = window.innerHeight;
+
 				renderer = new THREE.WebGLRenderer( { antialias: false ,alpha :true } );
 				renderer.shadowMap.enabled = true;
-				// todo - support pixelRatio in this demo
 				renderer.setSize( width, height );
 				document.body.appendChild( renderer.domElement );
+
 				scene = new THREE.Scene();
 				scene.add(group);
+
 				var pl1h=-6;//各个plane层次高度
 				var pl2h=0;
 				var pl3h=6;
-				var opacity = 1.0;
+				var opacity =0.7;
 				var transparent=true;
-				// 实例化一个加载器
+
 				var loader = new THREE.TextureLoader();
-				// 加载一个资源
+
 				loader.load(
-					// 资源链接
+
 					'IT/first.png',
-					// 资源加载完成后的回调函数
 					function ( texture ) {
-						// do something with the texture
-						var material = new THREE.MeshPhongMaterial( {
+
+						var material = new THREE.MeshStandardMaterial( {
 							side: THREE.DoubleSide,
 							map: texture
 						 } );
@@ -157,25 +117,26 @@
 						var plane1 = new THREE.Mesh( geometry, material );
 						plane1.rotateX(-Math.PI/2);
 						plane1.position.set(0,pl1h,0);
+                        plane1.receiveShadow=true;
 						scene.add( plane1 );
 					},
-					// 资源加载过程中的回调函数
+
 					function ( xhr ) {
 						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
 					},
-					// 资源下载出错时的回调函数
+
 					function ( xhr ) {
 						console.log( 'An error happened' );
 					}
 				);
-				// 加载一个资源
+
 				loader.load(
-					// 资源链接
+
 					'IT/second.png',
-					// 资源加载完成后的回调函数
+
 					function ( texture ) {
-						// do something with the texture
-						var material = new THREE.MeshPhongMaterial( {
+
+						var material = new THREE.MeshStandardMaterial( {
 							side: THREE.DoubleSide,
 							map: texture
 						 } );
@@ -185,25 +146,26 @@
 						var plane1 = new THREE.Mesh( geometry, material );
 						plane1.rotateX(-Math.PI/2);
 						plane1.position.set(0,pl2h,0);
+                        plane1.receiveShadow=true;
 						scene.add( plane1 );
 					},
-					// 资源加载过程中的回调函数
+
 					function ( xhr ) {
 						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
 					},
-					// 资源下载出错时的回调函数
+
 					function ( xhr ) {
 						console.log( 'An error happened' );
 					}
 				);
-				// 加载一个资源
+
 				loader.load(
-					// 资源链接
+
 					'IT/third.png',
-					// 资源加载完成后的回调函数
+
 					function ( texture ) {
-						// do something with the texture
-						var material = new THREE.MeshPhongMaterial( {
+
+						var material = new THREE.MeshStandardMaterial( {
 							side: THREE.DoubleSide,
 							map: texture
 						 } );
@@ -213,146 +175,174 @@
 						var plane1 = new THREE.Mesh( geometry, material );
 						plane1.rotateX(-Math.PI/2);
 						plane1.position.set(0,pl3h,0);
+                        plane1.receiveShadow=true;
 						scene.add( plane1 );
 					},
-					// 资源加载过程中的回调函数
 					function ( xhr ) {
 						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
 					},
-					// 资源下载出错时的回调函数
+
 					function ( xhr ) {
 						console.log( 'An error happened' );
 					}
 				);
-				var bluematerial = new THREE.MeshPhongMaterial( {color: 0x66ffff} );
+
+				var bluematerial = new THREE.MeshPhongMaterial( {color: 0x66ffff,emissive:0x66ffff} );
 				var yellowmaterial = new THREE.MeshPhongMaterial( {color: 0xFF9900} );
 				var whitematerial = new THREE.MeshPhongMaterial( {color: 0xffdfc5} );
+
 				var geometry2 = new THREE.BoxBufferGeometry( 1, 2, 1 );
 				var geometry1 = new THREE.BoxBufferGeometry( 1, 1, 1 );
+
 				var box1 = new THREE.Mesh( geometry1, whitematerial );
-				box1.position.set(-5.6,pl1h+0.5,-3);
+				box1.position.set(-5.6,pl1h+0.6,-3);
+                box1.castShadow=true;
 				group.add( box1 );
 				geometry.vertices.push(box1.position);
 				
 				var box2 = new THREE.Mesh( geometry2, bluematerial );
-				box2.position.set(-5.8,pl1h+1,-0.9);
+				box2.position.set(-5.8,pl1h+1.1,-0.9);
+                box2.castShadow=true;
 				group.add( box2 );
 				geometry.vertices.push(box2.position);
+
 				var box3 = new THREE.Mesh( geometry2, bluematerial );
-				box3.position.set(-5.6,pl1h+1,1.4);
+				box3.position.set(-5.6,pl1h+1.1,1.4);
+                box3.castShadow=true;
 				group.add( box3 );
 				geometry.vertices.push(box3.position);
+
 				var box4 = new THREE.Mesh( geometry1, whitematerial );
-				box4.position.set(-1.8,pl1h+0.5,-2.1);
+				box4.position.set(-1.8,pl1h+0.6,-2.1);
+                box4.castShadow=true;
 				group.add( box4 );
 				geometry.vertices.push(box4.position);
+
 				var box5 = new THREE.Mesh( geometry1, whitematerial );
-				box5.position.set(-1.8,pl1h+0.5,0);
+				box5.position.set(-1.8,pl1h+0.6,0);
+                box5.castShadow=true;
 				group.add( box5 );
 				geometry.vertices.push(box5.position);
+
 				var box6 = new THREE.Mesh( geometry2, bluematerial );
-				box6.position.set(2,pl1h+1,-3);
+				box6.position.set(2,pl1h+1.1,-3);
+                box6.castShadow=true;
 				group.add( box6 );
 				geometry.vertices.push(box6.position);
+
 				var box7 = new THREE.Mesh( geometry2, yellowmaterial );
-				box7.position.set(3,pl1h+1,-1);
+				box7.position.set(3,pl1h+1.1,-1);
+                box7.castShadow=true;
 				group.add( box7 );
 				geometry.vertices.push(box7.position);
+
 				var box8 = new THREE.Mesh( geometry2, yellowmaterial );
-				box8.position.set(2.7,pl1h+1,2);
+				box8.position.set(2.7,pl1h+1.1,2);
+                box8.castShadow=true;
 				group.add( box8 );
 				geometry.vertices.push(box8.position);
+
 				var box9 = new THREE.Mesh( geometry2, bluematerial );
-				box9.position.set(6.7,pl1h+1,-3);
+				box9.position.set(6.7,pl1h+1.1,-3);
+                box9.castShadow=true;
 				group.add( box9 );
 				geometry.vertices.push(box9.position);
+
 				var box10 = new THREE.Mesh( geometry2, yellowmaterial );
-				box10.position.set(5.5,pl1h+1,0.5);
+				box10.position.set(5.5,pl1h+1.1,0.5);
+                box10.castShadow=true;
 				group.add( box10 );
 				geometry.vertices.push(box10.position);
+
 				var box11 = new THREE.Mesh( geometry2, yellowmaterial );
-				box11.position.set(7.4,pl1h+1,2.2);
+				box11.position.set(7.4,pl1h+1.1,2.2);
+                box11.castShadow=true;
 				group.add( box11 );
 				geometry.vertices.push(box11.position);
+
+
 				var box12 = new THREE.Mesh( geometry1, whitematerial );
-				box12.position.set(3.6,pl2h+0.5,-0.4);
+				box12.position.set(3.6,pl2h+0.6,-0.4);
+                box12.castShadow=true;
 				group.add( box12 );
+
 				var box13 = new THREE.Mesh( geometry1, whitematerial );
-				box13.position.set(3.6,pl2h+.5,1.5);
+				box13.position.set(3.6,pl2h+.6,1.5);
+                box13.castShadow=true;
 				group.add( box13 );
+
 				var box14 = new THREE.Mesh( geometry1, whitematerial );
-				box14.position.set(7,pl2h+.5,-0.4);
+				box14.position.set(7,pl2h+.6,-0.4);
+                box14.castShadow=true;
 				group.add( box14 );
+
 				var box15 = new THREE.Mesh( geometry1, whitematerial );
-				box15.position.set(7,pl2h+.5,1.5);
+				box15.position.set(7,pl2h+.6,1.5);
+                box15.castShadow=true;
 				group.add( box15 );
+
 				var box16 = new THREE.Mesh( geometry2, yellowmaterial );
-				box16.position.set(4.5,pl3h+1,0.4);
+				box16.position.set(4.5,pl3h+1.1,0.4);
+                box16.castShadow=true;
 				group.add( box16 );
+
 				var light = new THREE.PointLight( 0xffffff, 1, 100 );
 				light.position.set( -8, 9, 0 );
 				scene.add( light );
+
 				light = new THREE.PointLight( 0xffffff, 1, 100 );
 				light.position.set( 16, 9, 15 );
 				scene.add( light );
+
 				var light = new THREE.PointLight( 0xffffff, 1, 100 );
 				light.position.set( 5, 15, 0 );
 				scene.add( light );
+
 				var light = new THREE.PointLight( 0xffffff, 1, 100 );
 				light.position.set( -5, 15, 15 );
 				scene.add( light );
+
+				var light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( 0, -15, -10 );
+				scene.add( light );
+
+				var light = new THREE.AmbientLight( 0xCAF4EC);
+				scene.add( light );
+
 				camera = new THREE.PerspectiveCamera( 45, width / height, 1, 10000 );
 				camera.position.set( 7, 23, 20 );
+
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
-				controls.minDistance = 2;
-				//controls.maxDistance = 20;
-				//controls.enablePan = false;
+				//controls.minDistance = 2;
+				//controls.maxDistance = 30;
+				controls.enablePan = false;
+                controls.zoomSpeed = 1.0;
+                controls.panSpeed = 1.0;
 				controls.enableDamping = true;
 				controls.dampingFactor = 0.25;
-				//
-				
+
 				stats = new Stats();
 				container.appendChild( stats.dom );
-				// postprocessing
-				composer = new THREE.EffectComposer( renderer );
-				var renderPass = new THREE.RenderPass( scene, camera );
-				renderPass.clear = false;//若果不这么做，只会看到 rederpass的输出，会覆盖bgpass的输出
-				composer.addPass(bgPass);
-				composer.addPass( renderPass );
-				outlinePass = new THREE.OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
-				composer.addPass( outlinePass );
-				var onLoad = function ( texture ) {
-					outlinePass.patternTexture = texture;
-					texture.wrapS = THREE.RepeatWrapping;
-					texture.wrapT = THREE.RepeatWrapping;
-				};
-				var bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.2, 0.1, 0.1);
-				composer.addPass( bloomPass );
-				effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
-				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
-				effectFXAA.renderToScreen = true;
-				composer.addPass( effectFXAA );
+
+				initBLOOMPostprocessing();
+
 				window.addEventListener( 'resize', onWindowResize, false );
+
 				window.addEventListener( 'mousemove', onTouchMove );
 				window.addEventListener( 'touchmove', onTouchMove );
 				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 				
 				function onDocumentMouseDown( event ) {
+
 			        event.preventDefault();
 			        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 			        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 			        raycaster.setFromCamera( mouse, camera );
 			        var intersects = raycaster.intersectObjects( [group], true );
-			//只重画当前选中部分的线条，删除则显示所有选中部分的线条
-			        scene.traverse( function ( sceneChild ) {
-			            if ( sceneChild.name === 'lineGroup' ) {
-			            sceneChild.children = new Array();
-			            scene.remove(sceneChild);
-			            }
-			        } );
 			        
 			        if ( intersects.length > 0 && (intersects[0].object.geometry.type== 'BoxBufferGeometry' ) ) {
-			        	if (intersects[0].object.position.y<=(pl1h+1)) {
+			        	if (intersects[0].object.position.y<=(pl1h+1.1)) {
+
 				            var object = intersects[0].object;
 				            geometryChange = new THREE.Geometry();
 				            var position = intersects[0].object.position;
@@ -360,6 +350,7 @@
 				            var p = geometry.vertices.length;
 				            for(i=0;i<p;i++){
 				                if(geometry.vertices[i] == position){
+
 				                    if (i == p - 1){
 				                        geometryChange.vertices.push(geometry.vertices[p - 2]);
 				                        geometryChange.vertices.push(position);
@@ -368,6 +359,7 @@
 				                        geometryChange.vertices.push(position);
 				                        geometryChange.vertices.push(geometry.vertices[i+1]);
 				                    }
+
 				                    else{
 				                        geometryChange.vertices.push(geometry.vertices[i-1]);
 				                        geometryChange.vertices.push(position);
@@ -406,11 +398,13 @@
 				            		cylinder.rotation.z -= Math.asin(xw/cheight);
 				            	else
 				            		cylinder.rotation.z += Math.asin(xw/cheight);
+
 				            	cylinder.castShadow = true;
 				            	cylinder.receiveShadow = true;
-				            	//圆柱而不是cube
+
 				            	lineGroup.add( cylinder );
 				            }
+
 				            loader.load(
 								'IT/word2.png',
 								function ( texture ) {
@@ -444,7 +438,7 @@
 	            			
 				        }
 				       //最底层连线
-				       else if (intersects[0].object.position.y<=(pl2h+1) && intersects[0].object.position.y>(pl1h+1)) {
+				       else if (intersects[0].object.position.y<=(pl2h+1.1) && intersects[0].object.position.y>(pl1h+1.1)) {
 				       		var lmaterial = new THREE.LineBasicMaterial({
 								color: 0x66ffff
 								});
@@ -455,7 +449,9 @@
 								var line = new THREE.Line(lgeometry,lmaterial);
 								lineGroup.add(line);
 							}
+
 							loader.load(
+
 								'IT/word2.png',
 								function ( texture ) {
 									var material = new THREE.MeshPhongMaterial( {
@@ -486,7 +482,17 @@
 								}
 							);
 				       }
+
 				       else{
+
+				       		//只重画当前选中部分的线条，删除则显示所有选中部分的线条
+					        scene.traverse( function ( sceneChild ) {
+					            if ( sceneChild.name === 'lineGroup' ) {
+					            sceneChild.children = new Array();
+					            scene.remove(sceneChild);
+					            }
+					        } );
+					        
 				       		var xma = new THREE.LineBasicMaterial({
 								color: 0xffdfc5
 								});
@@ -506,6 +512,7 @@
 							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 3.6,pl2h+.5,-0.4 ));
 							var line = new THREE.Line(lgeometry,xma);
 							lineGroup.add(line);
+
 							loader.load(
 								'IT/word1.png',
 								function ( texture ) {
@@ -528,6 +535,7 @@
 															intersects[0].object.position);
 									var line = new THREE.Line(lgeometry,lmaterial);
 									lineGroup.add(line);
+
 								},
 								function ( xhr ) {
 									console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
@@ -537,63 +545,129 @@
 								}
 							);
 				       }
-				      	scene.add( lineGroup );
-	        			selectedObjects = [];
+
+				       scene.add( lineGroup );
+				       selectedObjects = [];
 						selectedObjects.push( lineGroup );//给选中的线条和物体加发光特效
 						selectedObjects.push( intersects[ 0 ].object );
-	        			outlinePass.selectedObjects = selectedObjects;
-					}
-}
+            			outlinePass.selectedObjects = selectedObjects;
+
+					   }
+                    }//function
 				function onTouchMove( event ) {
+
 					var x, y;
+
 					if ( event.changedTouches ) {
+
 						x = event.changedTouches[ 0 ].pageX;
 						y = event.changedTouches[ 0 ].pageY;
+
 					} else {
+
 						x = event.clientX;
 						y = event.clientY;
+
 					}
+
 					mouse.x = ( x / window.innerWidth ) * 2 - 1;
 					mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
 					checkIntersection();
+
 				}
+
 				function addSelectedObject( object ) {
+
 					selectedObjects = [];
 					selectedObjects.push( object );
+
 				}
+
 				function checkIntersection() {
+
 					raycaster.setFromCamera( mouse, camera );
+
 					var intersects = raycaster.intersectObjects( [group], true );
+
 					if ( intersects.length > 0 ) {
+
 						var selectedObject = intersects[ 0 ].object;
 						addSelectedObject( selectedObject );
 						outlinePass.selectedObjects = selectedObjects;
-					} else {
-						// outlinePass.selectedObjects = [];
-					}
+
+					} 
 				}
 			}
+
 			function onWindowResize() {
+
 				var width = window.innerWidth;
 				var height = window.innerHeight;
+
 				camera.aspect = width / height;
 				camera.updateProjectionMatrix();
+
 				renderer.setSize( width, height );
-				composer.setSize( width, height );
+				effectComposer.setSize( width, height );
+
 				effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+			
 			}
+
 			function animate() {
-				//scene.background = new THREE.Color('rgba(0,0,0,0)');
+
 				requestAnimationFrame( animate );
+
 				stats.begin();
-				var timer = performance.now();
-				if ( params.rotate ) {
-					scene.rotation.y = timer * 0.0001;
-				}
+
 				controls.update();
-				composer.render();
+
+				renderer.autoClear = true;
+				renderer.setClearColor( 0xfff0f0 );
+				renderer.setClearAlpha( 0.0 );
+
+
+				render();
+
 				stats.end();
+
 			}
+            function render(){
+                effectComposer.render( scene, camera );
+            }
+
+            function initBLOOMPostprocessing( ){
+
+				renderer.toneMapping = THREE.LinearToneMapping;
+				renderer.shadowMap.enabled = true;
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+
+				outlinePass = new THREE.OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
+				
+
+				var copyShader = new THREE.ShaderPass(THREE.CopyShader);
+				copyShader.renderToScreen = true;
+
+				bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.2, 0.1, 0.1);//1.0, 9, 0.5, 512);
+				renderPass = new THREE.RenderPass(scene, camera);
+				renderPass.clear = false;
+				effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
+				effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight  );
+				//effectFXAA.renderToScreen = true;
+				effectComposer = new THREE.EffectComposer(renderer);
+				effectComposer.setSize( window.innerWidth, window.innerHeight );
+
+				effectComposer.addPass( outlinePass );
+				effectComposer.addPass(bgPass);
+				effectComposer.addPass(renderPass);
+				effectComposer.addPass(effectFXAA);
+				effectComposer.addPass(bloomPass);
+				effectComposer.addPass(copyShader);
+
+	}
+
 		</script>
 	</body>
 </html>
