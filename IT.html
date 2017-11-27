@@ -411,6 +411,7 @@
 				            	//圆柱而不是cube
 				            	lineGroup.add( cylinder );
 				            }
+
 				            loader.load(
 								'IT/word2.png',
 								function ( texture ) {
@@ -442,8 +443,8 @@
 								}
 							);
 	            			
-				        }
-				       //最底层连线
+				        } //最底层连线
+				      
 				       else if (intersects[0].object.position.y<=(pl2h+1) && intersects[0].object.position.y>(pl1h+1)) {
 				       		var lmaterial = new THREE.LineBasicMaterial({
 								color: 0x66ffff
@@ -493,6 +494,7 @@
 							var lgeometry = new THREE.Geometry();
 							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 7,pl2h+.5,1.5 ));
 							var line = new THREE.Line(lgeometry,xma);
+							//lineGroup.add(transformLine(intersects[0].object.position,new THREE.Vector3( 7,pl2h+.5,1.5 ),xma));
 							lineGroup.add(line);
 							var lgeometry = new THREE.Geometry();
 							lgeometry.vertices.push(intersects[0].object.position,new THREE.Vector3( 7,pl2h+.5,-0.4 ));
@@ -594,6 +596,7 @@
 				composer.render();
 				stats.end();
 			}
+
 		</script>
 	</body>
 </html>

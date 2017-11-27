@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Example 01.02 - First Scene</title>
+    <script type="text/javascript" src="build/three.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Div which will hold the Output -->
+<div id="WebGL-output">
+</div>
+
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+var scene = new THREE.Scene();
+    // once everything is loaded, we run our Three.js stuff.
+    function init() {
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // create a render and set the size
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setClearColor(new THREE.Color(0x111111));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // show axes in the screen
+        var axes = new THREE.AxisHelper(20);
+        scene.add(axes);
+        var mat = new THREE.MeshBasicMaterial({color: 0xC25959});
+    
+        // position and point the camera to the center of the scene
+        camera.position.x = -30;
+        camera.position.y = 40;
+        camera.position.z = 30;
+        camera.lookAt(scene.position);
+
+        var x = new THREE.Vector3(5,-4,2);
+        var y = new THREE.Vector3(-15,9,-4);
+        console.log(transformLine(x,y,mat));
+        scene.add(transformLine(x,y,mat));
+
+
+        // add the output of the renderer to the html element
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );
+
+        animate();
+        // render the scene
+        
+        function animate() {
+            requestAnimationFrame( animate );
+                controls.update();
+                renderer.render(scene, camera);
+            }
+    }
+    function transformLine (x,y,mat){
+
+        var center = new THREE.Vector3();
+        center.x = (x.x+y.x)/2;
+        center.y = (x.y+y.y)/2;
+        center.z = (x.z+y.z)/2;
+        var cheight = Math.sqrt((x.x-y.x)*(x.x-y.x)+(x.y-y.y)*(x.y-y.y)+(x.z-y.z)*(x.z-y.z));
+        var geometryCylinderLine = new THREE.CylinderBufferGeometry( 1, 1, cheight,20 );
+        var cylinder = new THREE.Mesh( geometryCylinderLine, mat );
+        scene.add(cylinder);
+        cylinder.position.set(center.x,center.y,center.z);
+        cylinder.castShadow = true;
+        cylinder.receiveShadow = true;
+
+        
+
+        var lgeometry = new THREE.Geometry();
+        lgeometry.vertices.push(x,y);
+        var line = new THREE.Line(lgeometry,mat);
+        scene.add(line);
+        //旋转X轴
+        
+        //旋转y轴
+        //旋转Z轴
+        return cylinder;
+
+        }
+    window.onload = init;
+
+</script>
+</body>
+</html>
